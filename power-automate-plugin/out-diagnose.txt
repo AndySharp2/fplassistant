@@ -1,0 +1,20 @@
+﻿
+=== set_current_env ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"envId\": \"d923c0e5-f81e-e58f-84c0-52fac05dacab\",\n  \"displayName\": \"AndysDev\",\n  \"source\": \"set_tool\",\n  \"updatedAt\": \"2026-08-19T12:39:36.845Z\"\n}"
+    }
+  ]
+}
+
+=== diagnose_run ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"Failed\",\n  \"failedActions\": [\n    {\n      \"name\": \"Get_next_deadline\",\n      \"code\": \"InvalidTemplate\",\n      \"message\": \"Unable to process template language expressions in action 'Get_next_deadline' inputs at line '0' and column '0': 'The template function 'filter' is not defined or not valid.'.\",\n      \"remediation\": \"Expression or template error. Check the expression syntax in this action's inputs.\"\n    }\n  ],\n  \"summary\": \"Run 08584144637388678479647095499CU12 status: Failed. 1 failed action(s): Get_next_deadline\"\n}"
+    }
+  ]
+}

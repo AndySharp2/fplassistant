@@ -1,0 +1,30 @@
+﻿
+=== set_current_env ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"envId\": \"d923c0e5-f81e-e58f-84c0-52fac05dacab\",\n  \"displayName\": \"AndysDev\",\n  \"source\": \"set_tool\",\n  \"updatedAt\": \"2026-08-19T12:38:09.983Z\"\n}"
+    }
+  ]
+}
+
+=== preflight_flow ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"overall\": \"ready\",\n  \"validation\": {\n    \"valid\": true,\n    \"errors\": [],\n    \"warnings\": []\n  },\n  \"connectionRefs\": [],\n  \"solutionWrap\": {\n    \"detected\": false\n  },\n  \"summary\": [\n    \"Ready to save + publish\"\n  ]\n}"
+    }
+  ]
+}
+
+=== create_flow ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"name\": \"12bd02d6-ca9b-f111-b8dc-7ced8d3a74ca\",\n  \"displayName\": \"FPL - Weekly Deadline Reminder\",\n  \"state\": \"Stopped\",\n  \"createdTime\": \"2026-08-19T12:38:13Z\"\n}"
+    }
+  ]
+}

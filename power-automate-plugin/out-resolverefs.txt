@@ -1,0 +1,20 @@
+﻿
+=== set_current_env ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"envId\": \"d923c0e5-f81e-e58f-84c0-52fac05dacab\",\n  \"displayName\": \"AndysDev\",\n  \"source\": \"set_tool\",\n  \"updatedAt\": \"2026-08-19T12:35:07.680Z\"\n}"
+    }
+  ]
+}
+
+=== resolve_refs ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"shared_office365\": {\n    \"connectionName\": \"shared-office365-968f005c-443d-4ee7-852c-5531625e8f91\",\n    \"source\": \"Embedded\",\n    \"id\": \"/providers/Microsoft.PowerApps/apis/shared_office365\",\n    \"tier\": \"NotSpecified\",\n    \"connectionReferenceLogicalName\": \"ppa_sharedoffice365_48b1a\"\n  },\n  \"shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef\": {\n    \"connectionName\": \"78b7dc56438d469ebfa92b13c99e087a\",\n    \"source\": \"Embedded\",\n    \"id\": \"/providers/Microsoft.PowerApps/apis/shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef\",\n    \"tier\": \"NotSpecified\"\n  }\n}"
+    }
+  ]
+}

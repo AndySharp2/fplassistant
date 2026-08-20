@@ -1,0 +1,224 @@
+{
+  "capturedAt": "2026-08-19T12:40:45.427Z",
+  "envId": "d923c0e5-f81e-e58f-84c0-52fac05dacab",
+  "flowId": "12bd02d6-ca9b-f111-b8dc-7ced8d3a74ca",
+  "operation": "update_flow",
+  "flow": {
+    "name": "12bd02d6-ca9b-f111-b8dc-7ced8d3a74ca",
+    "id": "/providers/Microsoft.Flow/environments/d923c0e5-f81e-e58f-84c0-52fac05dacab/flows/12bd02d6-ca9b-f111-b8dc-7ced8d3a74ca",
+    "type": "Microsoft.Flow/environments/flows",
+    "properties": {
+      "apiId": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "FPL - Weekly Deadline Reminder",
+      "userType": "Owner",
+      "definition": {
+        "$schema": "http://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "$authentication": {
+            "defaultValue": {},
+            "type": "SecureObject"
+          },
+          "$connections": {
+            "defaultValue": {},
+            "type": "Object"
+          }
+        },
+        "triggers": {
+          "Weekly_deadline_check": {
+            "recurrence": {
+              "frequency": "Week",
+              "interval": 1,
+              "schedule": {
+                "weekDays": [
+                  "Friday"
+                ],
+                "hours": [
+                  18
+                ],
+                "minutes": [
+                  0
+                ]
+              }
+            },
+            "type": "Recurrence"
+          }
+        },
+        "actions": {
+          "Get_bootstrap_data": {
+            "runAfter": {},
+            "type": "OpenApiConnection",
+            "inputs": {
+              "parameters": {},
+              "host": {
+                "apiId": "/providers/Microsoft.PowerApps/apis/shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+                "operationId": "GetBootstrapStatic",
+                "connectionName": "shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef"
+              }
+            }
+          },
+          "Get_next_deadline": {
+            "runAfter": {
+              "Get_bootstrap_data": [
+                "Succeeded"
+              ]
+            },
+            "type": "Compose",
+            "inputs": "@first(filter(body('Get_bootstrap_data')?['events'], item()?['is_next']))?['deadline_time']"
+          },
+          "Send_reminder_email": {
+            "runAfter": {
+              "Get_next_deadline": [
+                "Succeeded"
+              ]
+            },
+            "type": "OpenApiConnection",
+            "inputs": {
+              "parameters": {
+                "emailMessage": {
+                  "To": "AndySharp@AndysAutomation.onmicrosoft.com",
+                  "Subject": "FPL deadline reminder - review your transfers",
+                  "Body": "<p>Your next Fantasy Premier League transfer deadline is: @{outputs('Get_next_deadline')}</p><p>Open the FPL Transfer Assistant app to check the Transfer Tips before it locks.</p>"
+                }
+              },
+              "host": {
+                "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                "operationId": "SendEmailV2",
+                "connectionName": "shared_office365"
+              }
+            }
+          }
+        }
+      },
+      "state": "Started",
+      "sharingType": "CommonDataService",
+      "connectionReferences": {
+        "shared_office365": {
+          "connectionName": "shared-office365-968f005c-443d-4ee7-852c-5531625e8f91",
+          "connectionReferenceLogicalName": "ppa_sharedoffice365_48b1a",
+          "source": "Embedded",
+          "id": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "displayName": "Office 365 Outlook",
+          "iconUri": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1819/1.0.1819.4795/office365/icon.png",
+          "brandColor": "#0078D4",
+          "tier": "Standard",
+          "apiName": "office365",
+          "isProcessSimpleApiReferenceConversionAlreadyDone": false
+        },
+        "shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef": {
+          "connectionName": "78b7dc56438d469ebfa92b13c99e087a",
+          "connectionReferenceLogicalName": "new_sharednew5ffantasy20premier20league20api5f08b15f8a014951ef_818ef",
+          "source": "Embedded",
+          "id": "/providers/Microsoft.PowerApps/apis/shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+          "displayName": "Fantasy Premier League API",
+          "iconUri": "https://defaulticons.powerapps.com/defaulticons/api-dedicated.png",
+          "brandColor": "#007ee5",
+          "tier": "NotSpecified",
+          "apiName": "new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+          "isProcessSimpleApiReferenceConversionAlreadyDone": false
+        }
+      },
+      "installedConnectionReferences": {
+        "shared_office365": {
+          "connectionName": "shared-office365-968f005c-443d-4ee7-852c-5531625e8f91",
+          "connectionReferenceLogicalName": "ppa_sharedoffice365_48b1a",
+          "source": "Embedded",
+          "id": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "displayName": "Office 365 Outlook",
+          "iconUri": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1819/1.0.1819.4795/office365/icon.png",
+          "brandColor": "#0078D4",
+          "tier": "Standard",
+          "apiName": "office365",
+          "isProcessSimpleApiReferenceConversionAlreadyDone": false
+        },
+        "shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef": {
+          "connectionName": "78b7dc56438d469ebfa92b13c99e087a",
+          "connectionReferenceLogicalName": "new_sharednew5ffantasy20premier20league20api5f08b15f8a014951ef_818ef",
+          "source": "Embedded",
+          "id": "/providers/Microsoft.PowerApps/apis/shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+          "displayName": "Fantasy Premier League API",
+          "iconUri": "https://defaulticons.powerapps.com/defaulticons/api-dedicated.png",
+          "brandColor": "#007ee5",
+          "tier": "NotSpecified",
+          "apiName": "new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+          "isProcessSimpleApiReferenceConversionAlreadyDone": false
+        }
+      },
+      "createdTime": "2026-08-19T12:38:37.9991983Z",
+      "lastModifiedTime": "2026-08-19T12:38:38Z",
+      "flowSuspensionReason": "None",
+      "environment": {
+        "name": "d923c0e5-f81e-e58f-84c0-52fac05dacab",
+        "type": "Microsoft.Flow/environments",
+        "id": "/providers/Microsoft.Flow/environments/d923c0e5-f81e-e58f-84c0-52fac05dacab"
+      },
+      "definitionSummary": {
+        "triggers": [
+          {
+            "type": "Recurrence"
+          }
+        ],
+        "actions": [
+          {
+            "type": "OpenApiConnection",
+            "swaggerOperationId": "GetBootstrapStatic"
+          },
+          {
+            "type": "Compose"
+          },
+          {
+            "type": "OpenApiConnection",
+            "swaggerOperationId": "SendEmailV2"
+          }
+        ]
+      },
+      "creator": {
+        "tenantId": "34beab13-778b-4a39-bb56-39cde01799cd",
+        "objectId": "5585ff73-c681-4277-b395-0a33d335b552",
+        "userId": "5585ff73-c681-4277-b395-0a33d335b552",
+        "userType": "ActiveDirectory"
+      },
+      "flowTriggerUri": "https://unitedkingdom.api.flow.microsoft.com:443/providers/Microsoft.Flow/environments/d923c0e5-f81e-e58f-84c0-52fac05dacab/flows/5533c85a-83c3-d604-78bd-882daf662587/triggers/Weekly_deadline_check/run?api-version=2016-11-01",
+      "installationStatus": "Installed",
+      "owningUser": {
+        "id": "157645f7-2f41-f111-bec5-002248425682",
+        "azureActiveDirectoryObjectId": "5585ff73-c681-4277-b395-0a33d335b552"
+      },
+      "provisioningMethod": "FromDefinition",
+      "flowFailureAlertSubscribed": true,
+      "workflowEntityId": "12bd02d6-ca9b-f111-b8dc-7ced8d3a74ca",
+      "workflowUniqueId": "920b4865-b30f-4191-bf41-947825c399e6",
+      "referencedResources": [],
+      "isManaged": false,
+      "componentState": "Published",
+      "isCustomizable": {
+        "value": true,
+        "canBeChanged": true,
+        "managedPropertyLogicalName": "iscustomizableanddeletable"
+      },
+      "resourceId": "5533c85a-83c3-d604-78bd-882daf662587",
+      "machineDescriptionData": {}
+    }
+  },
+  "context": {
+    "flowId": "12bd02d6-ca9b-f111-b8dc-7ced8d3a74ca",
+    "displayName": "FPL - Weekly Deadline Reminder",
+    "workflowId": "12bd02d6-ca9b-f111-b8dc-7ced8d3a74ca",
+    "workflowIdUnique": "920b4865-b30f-4191-bf41-947825c399e6",
+    "inSolution": true,
+    "solutionId": "fd140aae-4df4-11dd-bd17-0019b9312238",
+    "solutionUniqueName": "Active",
+    "solutionFriendlyName": "Active Solution",
+    "isManaged": false,
+    "workflowIsManaged": false,
+    "isCustomizable": true,
+    "category": 5,
+    "ownerId": "157645f7-2f41-f111-bec5-002248425682",
+    "connectionReferenceLogicalNames": [
+      "ppa_sharedoffice365_48b1a",
+      "new_sharednew5ffantasy20premier20league20api5f08b15f8a014951ef_818ef"
+    ],
+    "warning": null
+  },
+  "backupVersion": 1
+}

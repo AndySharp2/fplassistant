@@ -1,0 +1,5 @@
+[
+  { "tool": "set_current_env", "args": { "environment": "d923c0e5-f81e-e58f-84c0-52fac05dacab" } },
+  { "tool": "list_connections", "args": {} },
+  { "tool": "list_templates", "args": {} }
+]

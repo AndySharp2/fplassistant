@@ -1,0 +1,106 @@
+[
+  {
+    "tool": "set_current_env",
+    "args": {
+      "env": "d923c0e5-f81e-e58f-84c0-52fac05dacab"
+    }
+  },
+  {
+    "tool": "validate_flow",
+    "args": {
+      "definition": {
+        "$schema": "http://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "$authentication": {
+            "defaultValue": {},
+            "type": "SecureObject"
+          },
+          "$connections": {
+            "defaultValue": {},
+            "type": "Object"
+          }
+        },
+        "triggers": {
+          "Weekly_deadline_check": {
+            "type": "Recurrence",
+            "recurrence": {
+              "frequency": "Week",
+              "interval": 1,
+              "schedule": {
+                "weekDays": [
+                  "Friday"
+                ],
+                "hours": [
+                  18
+                ],
+                "minutes": [
+                  0
+                ]
+              }
+            }
+          }
+        },
+        "actions": {
+          "Get_bootstrap_data": {
+            "type": "OpenApiConnection",
+            "inputs": {
+              "parameters": {},
+              "host": {
+                "apiId": "/providers/Microsoft.PowerApps/apis/shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+                "operationId": "GetBootstrapStatic",
+                "connectionName": "shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef"
+              }
+            },
+            "runAfter": {}
+          },
+          "Get_next_deadline": {
+            "type": "Compose",
+            "inputs": "@first(filter(body('Get_bootstrap_data')?['events'], item()?['is_next']))?['deadline_time']",
+            "runAfter": {
+              "Get_bootstrap_data": [
+                "Succeeded"
+              ]
+            }
+          },
+          "Send_reminder_email": {
+            "type": "OpenApiConnection",
+            "inputs": {
+              "parameters": {
+                "emailMessage": {
+                  "To": "AndySharp@AndysAutomation.onmicrosoft.com",
+                  "Subject": "FPL deadline reminder - review your transfers",
+                  "Body": "<p>Your next Fantasy Premier League transfer deadline is: @{outputs('Get_next_deadline')}</p><p>Open the FPL Transfer Assistant app to check the Transfer Tips before it locks.</p>"
+                }
+              },
+              "host": {
+                "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                "operationId": "SendEmailV2",
+                "connectionName": "shared_office365"
+              }
+            },
+            "runAfter": {
+              "Get_next_deadline": [
+                "Succeeded"
+              ]
+            }
+          }
+        }
+      },
+      "connectionRefs": {
+        "shared_office365": {
+          "connectionName": "shared-office365-968f005c-443d-4ee7-852c-5531625e8f91",
+          "source": "Embedded",
+          "id": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "tier": "NotSpecified"
+        },
+        "shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef": {
+          "connectionName": "78b7dc56438d469ebfa92b13c99e087a",
+          "source": "Embedded",
+          "id": "/providers/Microsoft.PowerApps/apis/shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+          "tier": "NotSpecified"
+        }
+      }
+    }
+  }
+]

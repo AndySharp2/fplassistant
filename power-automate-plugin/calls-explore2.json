@@ -1,0 +1,5 @@
+[
+  { "tool": "set_current_env", "args": { "env": "d923c0e5-f81e-e58f-84c0-52fac05dacab" } },
+  { "tool": "list_connections", "args": {} },
+  { "tool": "get_connector", "args": { "query": "Fantasy Premier League" } }
+]

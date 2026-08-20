@@ -1,0 +1,30 @@
+﻿
+=== set_current_env ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"envId\": \"d923c0e5-f81e-e58f-84c0-52fac05dacab\",\n  \"displayName\": \"AndysDev\",\n  \"source\": \"set_tool\",\n  \"updatedAt\": \"2026-08-19T12:34:18.681Z\"\n}"
+    }
+  ]
+}
+
+=== get_operation_details ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"operationId\": \"GetBootstrapStatic\",\n  \"connector\": \"shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef\",\n  \"summary\": \"Get all players, teams, and gameweek events\",\n  \"actionType\": \"OpenApiConnection\",\n  \"parameters\": {}\n}"
+    }
+  ]
+}
+
+=== get_operation_details ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"operationId\": \"SendEmailV2\",\n  \"connector\": \"shared_office365\",\n  \"summary\": \"Send an email (V2)\",\n  \"actionType\": \"OpenApiConnection\",\n  \"parameters\": {\n    \"emailMessage\": {\n      \"type\": \"object\",\n      \"required\": true,\n      \"description\": \"Email.\"\n    }\n  }\n}"
+    }
+  ]
+}

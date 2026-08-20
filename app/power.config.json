@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "appId": "081d8a68-f724-4690-b77f-2bd990449a55",
+  "appDisplayName": "FPL Transfer Assistant",
+  "region": "prod",
+  "environmentId": "d923c0e5-f81e-e58f-84c0-52fac05dacab",
+  "description": " ",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://localhost:3000",
+  "logoPath": "Default",
+  "connectionReferences": {
+    "fcb610c9-fa61-425b-bf1c-be7d55ce3b9e": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+      "displayName": "Fantasy Premier League API",
+      "dataSources": [
+        "new_5ffantasy_20premier_20league_20api_5f08b15f8a014951ef"
+      ],
+      "dataSets": {}
+    },
+    "dbd7b237-2ebd-49fc-90bb-d2cca4b9658a": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+      "displayName": "Microsoft Dataverse",
+      "dataSources": [
+        "commondataserviceforapps"
+      ],
+      "authenticationType": "Oauth",
+      "dataSets": {}
+    }
+  },
+  "databaseReferences": {}
+}

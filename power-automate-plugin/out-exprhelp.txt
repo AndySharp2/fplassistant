@@ -1,0 +1,10 @@
+﻿
+=== get_expression_help ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"count\": 0,\n  \"categories\": [],\n  \"functions\": []\n}"
+    }
+  ]
+}

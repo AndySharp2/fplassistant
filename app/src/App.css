@@ -1,0 +1,152 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 3rem;
+  text-align: left;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+header h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+nav button {
+  margin-left: 0.5rem;
+}
+
+nav button.active {
+  background-color: #37003c;
+  color: white;
+  border-color: #37003c;
+}
+
+.summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.summary-row input {
+  width: 4rem;
+  margin-left: 0.4rem;
+}
+
+.squad-list,
+.player-list {
+  list-style: none;
+  padding: 0;
+}
+
+.squad-list li,
+.player-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.pos-badge {
+  display: inline-block;
+  width: 2.4rem;
+  text-align: center;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  padding: 0.1rem 0;
+  font-weight: 600;
+}
+
+.pos-GKP { background: #f5c542; color: #222; }
+.pos-DEF { background: #4287f5; color: #fff; }
+.pos-MID { background: #42f554; color: #222; }
+.pos-FWD { background: #f54242; color: #fff; }
+
+.picker-controls {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.starting-toggle {
+  font-size: 0.8rem;
+}
+
+.gameweek-block {
+  margin-bottom: 1rem;
+}
+
+.gameweek-block ul {
+  list-style: none;
+  padding: 0;
+}
+
+.gameweek-block li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.difficulty {
+  display: inline-block;
+  width: 1.6rem;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  color: #fff;
+}
+
+.diff-1, .diff-2 { background: #2e8b57; }
+.diff-3 { background: #d4a017; }
+.diff-4, .diff-5 { background: #b22222; }
+
+.tips-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.results ol {
+  padding-left: 1.2rem;
+}
+
+.results li {
+  margin-bottom: 0.8rem;
+}
+
+.reason {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.notes {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.error {
+  color: #ff6b6b;
+}
+
+.hint {
+  color: #d4a017;
+}

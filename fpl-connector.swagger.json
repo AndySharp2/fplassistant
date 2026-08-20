@@ -1,0 +1,46 @@
+{
+  "swagger": "2.0",
+  "info": { "title": "Fantasy Premier League API", "version": "1.0.0" },
+  "host": "fantasy.premierleague.com",
+  "basePath": "/api",
+  "schemes": ["https"],
+  "consumes": [],
+  "produces": ["application/json"],
+  "paths": {
+    "/bootstrap-static/": {
+      "get": {
+        "summary": "Get all players, teams, and gameweek events",
+        "operationId": "GetBootstrapStatic",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/fixtures/": {
+      "get": {
+        "summary": "Get all fixtures with difficulty ratings",
+        "operationId": "GetFixtures",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/entry/{entryId}/event/{event}/picks/": {
+      "get": {
+        "summary": "Get a manager's squad picks for a gameweek",
+        "operationId": "GetEntryPicks",
+        "parameters": [
+          { "name": "entryId", "in": "path", "required": true, "type": "integer" },
+          { "name": "event", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/element-summary/{elementId}/": {
+      "get": {
+        "summary": "Get a player's gameweek history and prior-season totals",
+        "operationId": "GetElementSummary",
+        "parameters": [
+          { "name": "elementId", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    }
+  }
+}

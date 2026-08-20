@@ -1,0 +1,5 @@
+[
+  { "tool": "set_current_env", "args": { "env": "d923c0e5-f81e-e58f-84c0-52fac05dacab" } },
+  { "tool": "get_connector", "args": { "connector": "shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef" } },
+  { "tool": "get_connector", "args": { "connector": "shared_office365" } }
+]

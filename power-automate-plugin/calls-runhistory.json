@@ -1,0 +1,4 @@
+[
+  { "tool": "set_current_env", "args": { "env": "d923c0e5-f81e-e58f-84c0-52fac05dacab" } },
+  { "tool": "get_run_history", "args": { "env": "d923c0e5-f81e-e58f-84c0-52fac05dacab", "flow": "12bd02d6-ca9b-f111-b8dc-7ced8d3a74ca" } }
+]

@@ -1,0 +1,63 @@
+{
+  "$schema": "http://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "$authentication": { "defaultValue": {}, "type": "SecureObject" },
+    "$connections": { "defaultValue": {}, "type": "Object" }
+  },
+  "triggers": {
+    "Weekly_deadline_check": {
+      "type": "Recurrence",
+      "recurrence": {
+        "frequency": "Week",
+        "interval": 1,
+        "schedule": { "weekDays": ["Friday"], "hours": [18], "minutes": [0] }
+      }
+    }
+  },
+  "actions": {
+    "Get_bootstrap_data": {
+      "type": "OpenApiConnection",
+      "inputs": {
+        "parameters": {},
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+          "operationId": "GetBootstrapStatic",
+          "connectionName": "shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef"
+        }
+      },
+      "runAfter": {}
+    },
+    "Filter_next_event": {
+      "type": "Query",
+      "inputs": {
+        "from": "@body('Get_bootstrap_data')?['events']",
+        "where": "@equals(item()?['is_next'], true)"
+      },
+      "runAfter": { "Get_bootstrap_data": ["Succeeded"] }
+    },
+    "Get_next_deadline": {
+      "type": "Compose",
+      "inputs": "@first(body('Filter_next_event'))?['deadline_time']",
+      "runAfter": { "Filter_next_event": ["Succeeded"] }
+    },
+    "Send_reminder_email": {
+      "type": "OpenApiConnection",
+      "inputs": {
+        "parameters": {
+          "emailMessage": {
+            "To": "AndySharp@AndysAutomation.onmicrosoft.com",
+            "Subject": "FPL deadline reminder - review your transfers",
+            "Body": "<p>Your next Fantasy Premier League transfer deadline is: @{outputs('Get_next_deadline')}</p><p>Open the FPL Transfer Assistant app to check the Transfer Tips before it locks.</p>"
+          }
+        },
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "operationId": "SendEmailV2",
+          "connectionName": "shared_office365"
+        }
+      },
+      "runAfter": { "Get_next_deadline": ["Succeeded"] }
+    }
+  }
+}

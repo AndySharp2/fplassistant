@@ -1,0 +1,1923 @@
+﻿
+=== __list_tools__ ===
+{
+  "tools": [
+    {
+      "name": "list_environments",
+      "description": "List all Power Automate environments. Use query to filter by name.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Filter by display name (case-insensitive)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Environments"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "resolve_environment",
+      "description": "Check which environment the current user resolves to via environment routing",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID or omit for default"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Resolve Environment"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_current_env",
+      "description": "Show the current working environment that env-less tool calls (and the dashboard) target. Source is one of: env-var, set_tool, auto-remember, dashboard, none.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Get Current Environment"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "set_current_env",
+      "description": "Set the current working environment that env-less tool calls (and the dashboard) target. Pass an env GUID OR a display-name substring; the latter is resolved against list_environments. Validates the env exists before saving.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID (GUID) or a unique display-name substring"
+          }
+        },
+        "required": [
+          "env"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Set Current Environment"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_flows",
+      "description": "List cloud flows. Supports name search.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID (session default if omitted)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Filter by display name"
+          },
+          "top": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500,
+            "description": "Max results (default 50)"
+          },
+          "filter": {
+            "type": "string",
+            "description": "OData filter (advanced)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Flows"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_flow",
+      "description": "Get a flow's full definition + connection refs + metadata. Use this when you need to inspect or modify a specific flow. For large flows, use `path` to scope the response (e.g. path: \"definition.actions.MyAction\" or path: \"properties.connectionReferences\"). For metadata across many flows, prefer list_flows (4├ù faster ΓÇö doesn't fetch the full definition per row).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "path": {
+            "type": "string",
+            "description": "Dot-separated path to extract a sub-section of the response (e.g. \"definition.actions\", \"properties.connectionReferences\"). Omit for the full flow."
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Get Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_flow_context",
+      "description": "Resolve a flow's solution-membership: workflowId (Dataverse), workflowIdUnique (pre-publish), inSolution, solutionUniqueName, isManaged, isCustomizable, ownerId, category, and connectionReferenceLogicalNames. Use this BEFORE mutating a flow: refuse changes if isManaged=true, route name/description/owner changes through Dataverse for solution flows. `warning` is non-null if the lookup couldn't complete (no-dataverse-instance / workflow-not-found / dataverse-error) ΓÇö treat that as 'no solution context, fall through to PPAPI behavior'.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID (PPAPI flow id)"
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Get Flow Context"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "create_flow",
+      "description": "Create a new cloud flow from a JSON definition. **Auto-injects** $authentication + $connections parameters if missing (most agent-built definitions forget these ΓÇö wave 8 fix). Refuses by default if a flow with the same displayName already exists (returns the existing flow ID + a hint to use update_flow). Pass allowDuplicate: true only when you really want a second flow with the same name. **Best practice**: call preflight_flow first to catch missing connection refs + solution-wrap risk before creating. **Use this for**: standing up a brand-new flow. **Do NOT use for**: editing an existing flow ΓÇö use update_flow instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Flow display name"
+          },
+          "definition": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Flow definition JSON"
+          },
+          "connectionRefs": {
+            "$ref": "#/properties/definition",
+            "description": "Connection references JSON"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "Started",
+              "Stopped"
+            ],
+            "description": "Initial state (default Stopped)"
+          },
+          "allowDuplicate": {
+            "type": "boolean",
+            "description": "Bypass the no-duplicate-name guard. Default false."
+          }
+        },
+        "required": [
+          "name",
+          "definition"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Create Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "update_flow",
+      "description": "Update an existing flow's definition or properties. **Refuses by default if the flow lives in a managed Dataverse solution** (returns ManagedSolutionReadOnly). Pass forceManaged: true only if you understand the change will be overwritten on the next solution import ΓÇö see docs/recipes/upgrade-managed-flow.md for the right pattern. **Recommended two-phase update**: call preview_update first to obtain a previewToken bound to the exact change, then pass that token back here. update_flow will only apply if the proposal still matches what was previewed (prevents lost writes from concurrent edits). Auto-captures a backup snapshot before applying (last 10 retained per flow, accessible via list_backups). **Use this for**: any change to an existing flow. **Do NOT use for**: creating a new flow (use create_flow) or starting/stopping a flow (use publish_flow / disable_flow).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "definition": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Updated definition JSON"
+          },
+          "connectionRefs": {
+            "$ref": "#/properties/definition",
+            "description": "Connection references JSON"
+          },
+          "name": {
+            "type": "string",
+            "description": "New name"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "Started",
+              "Stopped"
+            ],
+            "description": "State"
+          },
+          "forceManaged": {
+            "type": "boolean",
+            "description": "Override the managed-solution read-only guard. Default false."
+          },
+          "previewToken": {
+            "type": "string",
+            "description": "Token issued by preview_update for this exact (env, flow, body) tuple. When supplied, the update only applies if the proposed change still matches what was previewed; mismatched tokens throw PreviewTokenMismatch."
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Update Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "preview_update",
+      "description": "Read-only: compute a diff between the live flow and the proposed update body, and return a short-lived single-use token. Use the token with update_flow to apply the change only if the proposal still matches what you reviewed. No mutation is performed by this tool.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "definition": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Proposed updated definition JSON"
+          },
+          "connectionRefs": {
+            "$ref": "#/properties/definition",
+            "description": "Proposed connection references JSON"
+          },
+          "name": {
+            "type": "string",
+            "description": "Proposed new name"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "Started",
+              "Stopped"
+            ],
+            "description": "Proposed state"
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Preview Update"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "edit_flow",
+      "description": "Apply targeted ('surgical') edits to an existing flow's definition without resending the whole thing ΓÇö ideal for changing one action, parameter, or expression on a large flow. Each operation has an `op` and a slash-delimited `path` into the definition (e.g. `actions/Send_Email/inputs/parameters/subject`):\n  ΓÇó set ΓÇö set (create or overwrite) the value at path\n  ΓÇó add ΓÇö insert a new key at path (fails if it already exists)\n  ΓÇó remove ΓÇö delete the key at path\n  ΓÇó merge ΓÇö deep-merge an object value into the existing object at path (sibling keys preserved)\nRoutes through the same safety path as update_flow: auto-backup, managed-solution guard (pass forceManaged to override), and optional preview token. Works on non-solution and unmanaged-solution flows, with or without connection references. Set dryRun: true to get a diff + single-use previewToken without writing; re-call with the SAME operations plus that previewToken to apply. **Use this for**: small, precise changes to an existing flow. **Use update_flow** when replacing the whole definition.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "type": "string",
+                  "enum": [
+                    "set",
+                    "add",
+                    "remove",
+                    "merge"
+                  ],
+                  "description": "Edit verb"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Slash-delimited path into the definition, e.g. actions/Compose/inputs"
+                },
+                "value": {
+                  "description": "New value (required for set/add/merge; merge requires an object)"
+                }
+              },
+              "required": [
+                "op",
+                "path"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Ordered list of edit operations"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "If true, return a diff + previewToken without writing."
+          },
+          "previewToken": {
+            "type": "string",
+            "description": "Token from a prior dryRun for these exact operations; applies only if the flow still matches."
+          },
+          "forceManaged": {
+            "type": "boolean",
+            "description": "Override the managed-solution read-only guard. Default false."
+          }
+        },
+        "required": [
+          "flow",
+          "operations"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Edit Flow (surgical)"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "copy_flow",
+      "description": "Copy a flow within the same environment or to another environment. Reads the source definition and re-creates it as a new, standalone flow (created Stopped by default). Same-env copies reuse the source connection references verbatim. Cross-env copies re-resolve each connector in the target environment (Dataverse-first, PPAPI fallback); connectors with no usable connection there are returned in `unresolvedConnectors` and the flow is left Stopped so it can't run half-wired. Flows with no connection references (built-in actions only) copy cleanly. Solution-bound sources (managed or unmanaged) are copied as plain standalone flows ΓÇö solution membership is dropped (noted in the response). **Use this for**: duplicating a flow or promoting it across environments. **Do NOT use for**: a true managed-solution clone ΓÇö use solution export/import.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Source environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Source flow ID"
+          },
+          "targetEnv": {
+            "type": "string",
+            "description": "Target environment ID (defaults to source env = same-env duplicate)"
+          },
+          "name": {
+            "type": "string",
+            "description": "New flow name (default: '<source> (Copy)')"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "Started",
+              "Stopped"
+            ],
+            "description": "Initial state of the copy (default Stopped)"
+          },
+          "autoResolveConnections": {
+            "type": "boolean",
+            "description": "For cross-env copies, auto-resolve connections in the target. Default true."
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Copy Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "publish_flow",
+      "description": "Enable (start) a flow. Refuses by default for managed-solution flows; pass forceManaged: true to override.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "forceManaged": {
+            "type": "boolean",
+            "description": "Override the managed-solution read-only guard. Default false."
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Enable Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "disable_flow",
+      "description": "Disable (stop) a flow. Refuses by default for managed-solution flows; pass forceManaged: true to override.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "forceManaged": {
+            "type": "boolean",
+            "description": "Override the managed-solution read-only guard. Default false."
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Disable Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "delete_flow",
+      "description": "Permanently delete a flow. **Refuses by default for managed-solution flows** (deletion is irreversible AND will be undone on next solution import). Pass forceManaged: true to override. **Use this when**: the flow is no longer needed AND you've confirmed no other flow / connection / app depends on it. **Do NOT use when**: you just want to stop the flow temporarily ΓÇö use disable_flow (reversible). Auto-captures a backup snapshot before deletion, accessible via restore_backup for ~10 retentions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "forceManaged": {
+            "type": "boolean",
+            "description": "Override the managed-solution read-only guard. Default false."
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "title": "Delete Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "run_flow",
+      "description": "Trigger a manual flow run. Set wait=true to poll until completion.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Trigger body JSON"
+          },
+          "wait": {
+            "type": "boolean",
+            "description": "Wait for completion (default false)"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Wait timeout seconds (default 60)"
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Run Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_run_history",
+      "description": "Get recent run history for a flow",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "top": {
+            "type": "number",
+            "description": "Max results (default 10)"
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Run History"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_run_details",
+      "description": "Get details for a specific flow run",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "run": {
+            "type": "string",
+            "description": "Run ID"
+          }
+        },
+        "required": [
+          "flow",
+          "run"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Run Details"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_run_actions",
+      "description": "Get action-level execution details for a specific flow run",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "run": {
+            "type": "string",
+            "description": "Run ID"
+          }
+        },
+        "required": [
+          "flow",
+          "run"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Run Actions"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_run_action_repetitions",
+      "description": "List iteration-level details for an action that runs inside a loop (Apply_to_each / Do_until) within a run ΓÇö the only way to see WHICH iteration failed. Each repetition has its own status, inputs/outputs links, and (on failure) error. Pass the name of an action **inside** the loop (e.g. a Compose within the Apply_to_each), NOT the loop container itself ΓÇö the container action returns no repetitions. `flow` defaults to the pinned current flow (set_current_flow).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID (defaults to pinned current flow)"
+          },
+          "run": {
+            "type": "string",
+            "description": "Run ID"
+          },
+          "action": {
+            "type": "string",
+            "description": "Loop action name (e.g. Apply_to_each)"
+          }
+        },
+        "required": [
+          "run",
+          "action"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Loop Iteration Details"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "cancel_run",
+      "description": "Cancel a single in-progress (Running/Waiting) flow run. `flow` defaults to the pinned current flow.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID (defaults to pinned current flow)"
+          },
+          "run": {
+            "type": "string",
+            "description": "Run ID to cancel"
+          }
+        },
+        "required": [
+          "run"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Cancel Run"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "resubmit_run",
+      "description": "Resubmit a past run using its original trigger inputs (the trigger is auto-detected from the run). Useful after fixing the cause of a failure. `flow` defaults to the pinned current flow.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID (defaults to pinned current flow)"
+          },
+          "run": {
+            "type": "string",
+            "description": "Run ID to resubmit"
+          },
+          "trigger": {
+            "type": "string",
+            "description": "Trigger name (auto-detected from the run if omitted)"
+          }
+        },
+        "required": [
+          "run"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Resubmit Run"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "cancel_all_runs",
+      "description": "Bulk-cancel every in-progress run of a flow ΓÇö for incident response when many erroneous runs are queued. Uses the Dataverse CancelAllCloudFlowRuns bulk action when the flow has a Dataverse workflow record (solution AND modern non-solution flows); otherwise cancels each Running/Waiting run individually. Optionally turns the flow off afterwards (turnOff) so the root cause can be fixed. Statuses transition Running/Waiting ΓåÆ Canceling ΓåÆ Canceled (can take up to 24h). `flow` defaults to the pinned current flow.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID (defaults to pinned current flow)"
+          },
+          "turnOff": {
+            "type": "boolean",
+            "description": "Also disable the flow after cancelling. Default false."
+          },
+          "forceManaged": {
+            "type": "boolean",
+            "description": "Override the managed-solution guard when turning the flow off. Default false."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Cancel All Runs"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "diagnose_run",
+      "description": "Diagnose a flow run: classify each failed/timed-out action with an actionable remediation. Read-only ΓÇö fetches run details + actions and maps known error codes (auth, throttling, 404, dependent-action, etc.) to fixes. `flow` defaults to the pinned current flow.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID (defaults to pinned current flow)"
+          },
+          "run": {
+            "type": "string",
+            "description": "Run ID to diagnose"
+          }
+        },
+        "required": [
+          "run"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Diagnose Run"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_expression_help",
+      "description": "Look up Power Automate (Logic Apps WDL) expression functions ΓÇö name, signature, description, and a copy-pasteable example. Filter by `query` (matches name/signature/description) and/or `category`. No args returns the full curated reference.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search term (e.g. 'date', 'concat', 'loop item')"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "string",
+              "collection",
+              "logical",
+              "conversion",
+              "math",
+              "date",
+              "reference",
+              "workflow"
+            ],
+            "description": "Filter by category"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Expression Help"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "set_current_flow",
+      "description": "Pin a flow as the session's current flow. Once pinned, run/debug tools (cancel_run, resubmit_run, cancel_all_runs, get_run_action_repetitions, diagnose_run) use it when `flow` is omitted ΓÇö a guardrail so an autonomous agent acts on exactly one flow.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID (for display only)"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID to pin"
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Set Current Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_current_flow",
+      "description": "Get the session's pinned current flow (or null if none).",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Get Current Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "clear_current_flow",
+      "description": "Unpin the session's current flow.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Clear Current Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_past_trigger_inputs",
+      "description": "Fetch trigger input envelopes from past flow runs ΓÇö same primitive the PA designer uses for 'Test with previous run data'. Returns most-recent first by default. Use --top to limit, --runId for a specific run, --statusFilter to filter Succeeded/Failed. Each entry includes triggerInputs + a contentDigest for deduping. Best companion to test_run for instant testing without manual scaffolding.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "top": {
+            "type": "number",
+            "description": "Max past runs to fetch (default 5)"
+          },
+          "runId": {
+            "type": "string",
+            "description": "Fetch a specific run instead of latest"
+          },
+          "statusFilter": {
+            "type": "string",
+            "enum": [
+              "Succeeded",
+              "Failed",
+              "any"
+            ],
+            "description": "Filter by run status (default any)"
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Past Trigger Inputs"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "preflight_flow",
+      "description": "Pre-save sanity check: validate the definition + check connection-ref status + detect solution-wrap-will-block-publish risk. Use BEFORE create_flow or update_flow to catch the common failure modes (missing $authentication, broken connection ref, CannotStartUnpublishedSolutionFlow). Returns {overall: ready|warn|block, validation, connectionRefs, solutionWrap, summary[]}.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "definition": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "The flow definition to check"
+          },
+          "connectionReferences": {
+            "$ref": "#/properties/definition",
+            "description": "Connection refs in flow body (same shape as create_flow)"
+          }
+        },
+        "required": [
+          "definition"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Preflight Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_trigger_emulators",
+      "description": "List the trigger types FlowAgent can emulate via direct connector calls (SharePoint NewItem ΓåÆ CreateItem etc.). Use this to know whether emulate_live_trigger (P1, pending) can fire a real trigger event for a given flow without waiting for an organic external event. Returns array of {triggerOperation, connector, emulatorOperation, livenessImpact, defaultPayload, notes?}.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Trigger Emulators"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_connections",
+      "description": "List connections in an environment, optionally filtered by connector. Returns summarized fields (name, connector, displayName, status, owner, accountName, createdTime).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name filter"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Connections"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "resolve_refs",
+      "description": "Auto-discover connections for connectors and output connection references JSON. Tries Dataverse first, falls back to PPAPI lookup.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connectors": {
+            "type": "string",
+            "description": "Comma-separated connector names"
+          }
+        },
+        "required": [
+          "connectors"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Resolve Connection Refs"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "pick_or_create_connection",
+      "description": "Idempotent: get a Connected connectionName for the requested connector. Discovers via DataverseΓåÆPPAPI fallback; if none found, creates one (uses silent first-party auth for M365 connectors, browser consent otherwise). Use this instead of stitching list_connections + resolve_refs + create_connection by hand. Returns {mode: found|created|found-not-connected|no-connection-and-create-disabled, connectionName, status, authMode, connector, refSourcePath}.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name (e.g. shared_sharepointonline)"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "find-or-create",
+              "find-only",
+              "create-only"
+            ],
+            "description": "Default: find-or-create"
+          },
+          "noBrowser": {
+            "type": "boolean",
+            "description": "Don't open browser on consent (print URL instead)"
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Connection parameters (e.g. for SQL: server, database)"
+          }
+        },
+        "required": [
+          "connector"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Pick or Create Connection"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "resolve_params",
+      "description": "Designer-emulating dropdown resolver: returns every parameter for a connector operation with its dynamic values (lists, trees, dynamic-schemas) already resolved. Replaces N round-trips of get_dynamic_list/tree/schema with one. Auto-discovers a connection if none passed (DataverseΓåÆPPAPI fallback ΓÇö handles Dataverse-only orgs). Per-dropdown errors are returned per-parameter; the call never fails wholesale. Schema is cached per session for 5 min. Use before create_flow when you don't yet know the dropdown values to pass.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name (e.g. shared_sharepointonline)"
+          },
+          "operation": {
+            "type": "string",
+            "description": "Operation ID (e.g. GetItems, PostMessageToChannel)"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection name; if omitted, auto-discovered via DataverseΓåÆPPAPI"
+          },
+          "currentInputs": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Concrete values for parent params (e.g. siteUrl, listId) so child dropdowns can resolve"
+          }
+        },
+        "required": [
+          "connector",
+          "operation"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Resolve Connector Params"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "resolve_entity",
+      "description": "Resolve display names to IDs for dynamic connector parameters (folders, teams, channels, lists, tables). Uses the connector's own picker APIs via API Hub ΓÇö works where resolve_params fails (Outlook folders, Teams locations). Pass the connector, entity type, display name query, and optionally dependencies (e.g. team name for channel resolution). Returns: resolved ID + confidence (exact/fuzzy/ambiguous/not-found) + alternatives when ambiguous. **Fail-closed**: ambiguous results should be confirmed with the user before using in a flow definition.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name (e.g. shared_office365, shared_teams)"
+          },
+          "entityType": {
+            "type": "string",
+            "description": "Parameter/entity type to resolve (e.g. folderPath, groupId, channelId, entityName, table, form_id, planId, bucketId)"
+          },
+          "query": {
+            "type": "string",
+            "description": "Display name to search for (e.g. 'Inbox', 'Power Automate', 'General')"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection name; auto-discovered if omitted"
+          },
+          "dependencies": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Parent parameter values needed for cascading resolution (e.g. {groupId: '<teamId>'} for channel lookup)"
+          }
+        },
+        "required": [
+          "connector",
+          "entityType",
+          "query"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Resolve Entity"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "test_connection",
+      "description": "Check whether a specific connection is currently Connected. Use to verify a connection is still authenticated before relying on it (cheaper than running the flow and getting a runtime auth error).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection name (the GUID-suffixed identifier)"
+          }
+        },
+        "required": [
+          "connector",
+          "connection"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Test Connection"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "fix_connection",
+      "description": "Re-authenticate a broken connection (e.g. expired token). For first-party M365 connectors this is silent; for OAuth connectors a browser opens for consent. Use when test_connection returns connected=false or when a flow run fails with auth errors.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection name to re-auth"
+          },
+          "noBrowser": {
+            "type": "boolean",
+            "description": "Don't open browser; print consent URL instead"
+          }
+        },
+        "required": [
+          "connector",
+          "connection"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Fix Connection"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "delete_connection",
+      "description": "Delete a connection. Requires confirm:true to actually delete (prevents accidental destruction). Note: deleting a connection used by an enabled flow will break that flow at next run; check `list_flows` for dependencies first.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection name to delete"
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "Must be true to perform the delete. Prevents accidental destruction."
+          }
+        },
+        "required": [
+          "connector",
+          "connection",
+          "confirm"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "title": "Delete Connection"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_connectors",
+      "description": "List available connectors. Use query to filter by name. Returns name + displayName + tier.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "query": {
+            "type": "string",
+            "description": "Filter by name (case-insensitive)"
+          },
+          "top": {
+            "type": "number",
+            "description": "Max results"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Connectors"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_connector",
+      "description": "Get connector operation index. Use query to filter. Use get_operation_details for full param specs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name"
+          },
+          "query": {
+            "type": "string",
+            "description": "Filter operations by keyword"
+          }
+        },
+        "required": [
+          "connector"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Get Connector"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "search_operations",
+      "description": "Search connector operations by keyword. Returns operation name, description, connector, and type.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "query": {
+            "type": "string",
+            "description": "Search text"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Limit to connector"
+          },
+          "top": {
+            "type": "number",
+            "description": "Max results (default 20)"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Search Operations"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_operation_details",
+      "description": "Get exact param names, types, enums, and required action type for a connector operation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name"
+          },
+          "operation": {
+            "type": "string",
+            "description": "Operation ID"
+          }
+        },
+        "required": [
+          "connector",
+          "operation"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Operation Details"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "invoke_operation",
+      "description": "Call a connector's dynamic resolver (dropdowns, tree browsing, dynamic schemas)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection ID"
+          },
+          "operation": {
+            "type": "string",
+            "description": "Operation ID"
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Parameters JSON"
+          }
+        },
+        "required": [
+          "connector",
+          "connection",
+          "operation"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Invoke Operation"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_datasets",
+      "description": "List available datasets for a tabular connector (SharePoint sites, SQL servers, Excel locations, etc.). Use before list_tables to discover what datasets/sites/servers are available. Calls the connector's GetDataSets operation via API Hub.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name (e.g. shared_sharepointonline, shared_sql, shared_excelonlinebusiness)"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection ID"
+          }
+        },
+        "required": [
+          "connector",
+          "connection"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Datasets"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_tables",
+      "description": "List tables/lists in a dataset for a tabular connector (SharePoint lists, SQL tables, Excel tables, etc.). Requires a dataset name from list_datasets (e.g. a SharePoint site URL, a SQL server+db string). Calls the connector's GetTables operation via API Hub.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "connector": {
+            "type": "string",
+            "description": "Connector name"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Connection ID"
+          },
+          "dataset": {
+            "type": "string",
+            "description": "Dataset name from list_datasets (e.g. SharePoint site URL, SQL server string)"
+          }
+        },
+        "required": [
+          "connector",
+          "connection",
+          "dataset"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Tables"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_templates",
+      "description": "List built-in flow templates",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Templates"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "scaffold_flow",
+      "description": "Generate flow definition from template. Pass env to auto-resolve connections. When env is provided, connection resolution is REQUIRED ΓÇö returns an error with missing connectors if any can't be resolved. Without env, returns placeholder refs for offline use.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "string",
+            "description": "Template ID"
+          },
+          "env": {
+            "type": "string",
+            "description": "Environment ID for connection resolution"
+          }
+        },
+        "required": [
+          "template"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Scaffold Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "validate_flow",
+      "description": "Pre-validate a flow definition against PA rules",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "definition": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Flow definition JSON"
+          },
+          "connectionRefs": {
+            "$ref": "#/properties/definition",
+            "description": "Connection references JSON"
+          }
+        },
+        "required": [
+          "definition"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Validate Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "smoke_test",
+      "description": "End-to-end connectivity test: create, run, verify, cleanup",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Smoke Test"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_desktop_flows",
+      "description": "List desktop flows (RPA) in an environment",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "top": {
+            "type": "number",
+            "description": "Max results"
+          },
+          "name": {
+            "type": "string",
+            "description": "Filter by name"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Desktop Flows"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "run_desktop_flow",
+      "description": "Trigger a desktop flow and wait for completion",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Desktop flow ID"
+          },
+          "machineGroup": {
+            "type": "string",
+            "description": "Machine group name or ID"
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Input data JSON"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Timeout seconds (default 120)"
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Run Desktop Flow"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_machine_groups",
+      "description": "List machine groups in an environment",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Machine Groups"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_backups",
+      "description": "List pre-mutation backup snapshots captured for a flow. Newest first. Last 10 retained per flow.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "List Backups"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_backup",
+      "description": "Read a specific backup snapshot's full contents (flow definition, connectionReferences, optional context).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID"
+          },
+          "file": {
+            "type": "string",
+            "description": "Backup filename from list_backups"
+          }
+        },
+        "required": [
+          "flow",
+          "file"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Get Backup"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "restore_backup",
+      "description": "Restore a flow from a backup snapshot. If the flow still exists, the current state is itself backed up and then the flow is updated in place. If the flow was deleted, it is recreated (which yields a new flow ID). Pass file to choose a specific backup; omit for the latest.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "string",
+            "description": "Environment ID"
+          },
+          "flow": {
+            "type": "string",
+            "description": "Flow ID (original)"
+          },
+          "file": {
+            "type": "string",
+            "description": "Backup filename. Defaults to most recent."
+          },
+          "forceManaged": {
+            "type": "boolean",
+            "description": "Override the managed-solution read-only guard. Default false."
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "title": "Restore Backup"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ]
+}

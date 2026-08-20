@@ -1,0 +1,20 @@
+﻿
+=== set_current_env ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"envId\": \"d923c0e5-f81e-e58f-84c0-52fac05dacab\",\n  \"displayName\": \"AndysDev\",\n  \"source\": \"set_tool\",\n  \"updatedAt\": \"2026-08-19T12:37:50.457Z\"\n}"
+    }
+  ]
+}
+
+=== validate_flow ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"valid\": true\n}"
+    }
+  ]
+}

@@ -1,0 +1,199 @@
+{
+  "name": "shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+  "id": "/providers/Microsoft.PowerApps/apis/shared_new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+  "type": "Microsoft.PowerApps/apis",
+  "properties": {
+    "xrmConnectorId": "9004b1ac-c29b-f111-b8dc-7ced8d3a74ca",
+    "displayName": "Fantasy Premier League API",
+    "iconUri": "https://defaulticons.powerapps.com/defaulticons/api-dedicated.png",
+    "iconBrandColor": "#007ee5",
+    "contact": {},
+    "license": {},
+    "apiEnvironment": "Shared",
+    "isCustomApi": true,
+    "blobUrisAreProxied": false,
+    "connectionParameters": {},
+    "swagger": {
+      "swagger": "2.0",
+      "info": {
+        "title": "Fantasy Premier League API",
+        "version": "1.0.0"
+      },
+      "host": "d923c0e5-f81e-e58f-84c0-52fac05dacab.08.custom.uk.azure-apihub.net",
+      "basePath": "/apim/new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+      "schemes": [
+        "https",
+        "http"
+      ],
+      "consumes": [],
+      "produces": [
+        "application/json"
+      ],
+      "paths": {
+        "/{connectionId}/bootstrap-static/": {
+          "get": {
+            "summary": "Get all players, teams, and gameweek events",
+            "operationId": "GetBootstrapStatic",
+            "responses": {
+              "200": {
+                "description": "OK"
+              }
+            },
+            "parameters": [
+              {
+                "name": "connectionId",
+                "in": "path",
+                "required": true,
+                "x-ms-visibility": "internal",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "/{connectionId}/fixtures/": {
+          "get": {
+            "summary": "Get all fixtures with difficulty ratings",
+            "operationId": "GetFixtures",
+            "responses": {
+              "200": {
+                "description": "OK"
+              }
+            },
+            "parameters": [
+              {
+                "name": "connectionId",
+                "in": "path",
+                "required": true,
+                "x-ms-visibility": "internal",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "/{connectionId}/entry/{entryId}/event/{event}/picks/": {
+          "get": {
+            "summary": "Get a manager's squad picks for a gameweek",
+            "operationId": "GetEntryPicks",
+            "parameters": [
+              {
+                "name": "connectionId",
+                "in": "path",
+                "required": true,
+                "x-ms-visibility": "internal",
+                "type": "string"
+              },
+              {
+                "name": "entryId",
+                "in": "path",
+                "required": true,
+                "type": "integer"
+              },
+              {
+                "name": "event",
+                "in": "path",
+                "required": true,
+                "type": "integer"
+              }
+            ],
+            "responses": {
+              "200": {
+                "description": "OK"
+              }
+            }
+          }
+        },
+        "/{connectionId}/element-summary/{elementId}/": {
+          "get": {
+            "summary": "Get a player's gameweek history and prior-season totals",
+            "operationId": "GetElementSummary",
+            "parameters": [
+              {
+                "name": "connectionId",
+                "in": "path",
+                "required": true,
+                "x-ms-visibility": "internal",
+                "type": "string"
+              },
+              {
+                "name": "elementId",
+                "in": "path",
+                "required": true,
+                "type": "integer"
+              }
+            ],
+            "responses": {
+              "200": {
+                "description": "OK"
+              }
+            }
+          }
+        }
+      }
+    },
+    "runtimeUrls": [
+      "https://d923c0e5-f81e-e58f-84c0-52fac05dacab.08.custom.uk.azure-apihub.net/apim/new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+      "http://d923c0e5-f81e-e58f-84c0-52fac05dacab.08.custom.uk.azure-apihub.net/apim/new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef"
+    ],
+    "primaryRuntimeUrl": "https://d923c0e5-f81e-e58f-84c0-52fac05dacab.08.custom.uk.azure-apihub.net/apim/new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+    "doNotUseApiHubNetRuntimeUrl": "https://d923c0e5-f81e-e58f-84c0-52fac05dacab.08.custom.uk.azure-apihub.net/apim/new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef",
+    "metadata": {
+      "source": "powerapps-user-defined",
+      "brandColor": "#007ee5",
+      "contact": {},
+      "license": {},
+      "publisherUrl": null,
+      "serviceUrl": null,
+      "documentationUrl": null,
+      "environmentName": "d923c0e5-f81e-e58f-84c0-52fac05dacab",
+      "xrmConnectorId": "9004b1ac-c29b-f111-b8dc-7ced8d3a74ca",
+      "almMode": "Solution",
+      "parameters": {},
+      "useNewApimVersion": "True",
+      "createdBy": "{\"id\":\"5585ff73-c681-4277-b395-0a33d335b552\",\"displayName\":\"Andy Sharp\",\"email\":\"AndySharp@AndysAutomation.onmicrosoft.com\",\"type\":\"User\",\"userType\":\"NotSpecified\",\"tenantId\":\"34beab13-778b-4a39-bb56-39cde01799cd\",\"userPrincipalName\":\"AndySharp@AndysAutomation.onmicrosoft.com\"}",
+      "modifiedBy": "{\"id\":\"5585ff73-c681-4277-b395-0a33d335b552\",\"displayName\":\"Andy Sharp\",\"email\":\"AndySharp@AndysAutomation.onmicrosoft.com\",\"type\":\"User\",\"userType\":\"NotSpecified\",\"tenantId\":\"34beab13-778b-4a39-bb56-39cde01799cd\",\"userPrincipalName\":\"AndySharp@AndysAutomation.onmicrosoft.com\"}",
+      "allowSharing": false,
+      "rateLimit": 0
+    },
+    "capabilities": [
+      "actions"
+    ],
+    "apiDefinitions": {
+      "originalSwaggerUrl": "https://ukl001wukext.blob.core.windows.net/api-swagger-files/new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef.json_original?skoid=25540721-8181-465d-af2f-e47b06d8990b&sktid=33e01921-4d64-4f8c-a055-5bdaffd5e33d&skt=2026-08-19T07%3A52%3A50Z&ske=2026-08-20T07%3A52%3A50Z&sks=b&skv=2025-01-05&sv=2025-01-05&spr=https&se=2026-08-19T16%3A33%3A01Z&sr=b&sp=r&sig=U27DBmKnqwTJosnXybxlHb0%2BrNdgCK0TWBqdWYhxF6I%3D",
+      "modifiedSwaggerUrl": "https://ukl001wukext.blob.core.windows.net/api-swagger-files/new-5ffantasy-20premier-20league-20api-5f08b15f8a014951ef.json?skoid=25540721-8181-465d-af2f-e47b06d8990b&sktid=33e01921-4d64-4f8c-a055-5bdaffd5e33d&skt=2026-08-19T07%3A52%3A50Z&ske=2026-08-20T07%3A52%3A50Z&sks=b&skv=2025-01-05&sv=2025-01-05&spr=https&se=2026-08-19T16%3A33%3A01Z&sr=b&sp=r&sig=ziudIBF8HpecIdADV5JfdbQfMzW7lHeAFjUFl%2BRcvS0%3D"
+    },
+    "policyTemplateInstances": [],
+    "backendService": {
+      "serviceUrl": "https://fantasy.premierleague.com/api"
+    },
+    "createdBy": {
+      "id": "5585ff73-c681-4277-b395-0a33d335b552",
+      "displayName": "Andy Sharp",
+      "email": "AndySharp@AndysAutomation.onmicrosoft.com",
+      "type": "User",
+      "userType": "NotSpecified",
+      "tenantId": "34beab13-778b-4a39-bb56-39cde01799cd",
+      "userPrincipalName": "AndySharp@AndysAutomation.onmicrosoft.com"
+    },
+    "modifiedBy": {
+      "id": "5585ff73-c681-4277-b395-0a33d335b552",
+      "displayName": "Andy Sharp",
+      "email": "AndySharp@AndysAutomation.onmicrosoft.com",
+      "type": "User",
+      "userType": "NotSpecified",
+      "tenantId": "34beab13-778b-4a39-bb56-39cde01799cd",
+      "userPrincipalName": "AndySharp@AndysAutomation.onmicrosoft.com"
+    },
+    "createdTime": "2026-08-19T11:40:00.3074053Z",
+    "changedTime": "2026-08-19T15:32:08.5852381Z",
+    "environment": {
+      "id": "/providers/Microsoft.PowerApps/environments/d923c0e5-f81e-e58f-84c0-52fac05dacab",
+      "name": "d923c0e5-f81e-e58f-84c0-52fac05dacab"
+    },
+    "tier": "Standard",
+    "publisher": "Andy Sharp",
+    "almMode": "Solution",
+    "parameters": {},
+    "rateLimit": 0,
+    "apiVersion": "None"
+  }
+}

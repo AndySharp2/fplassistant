@@ -1,0 +1,20 @@
+displayName: FPL Transfer Assistant
+schemaName: cra06_fpltransferassistant_lhAWSi
+accessControlPolicy: GroupMembership
+authenticationMode: Integrated
+authenticationTrigger: Always
+configuration:
+  recognizer:
+    kind: CLICopilotRecognizer
+
+  agentSettings:
+    model:
+      series: GPT56Reasoning
+
+    instructions: {}
+    web:
+      enableWebSearch: true
+
+publishedOn: 2026-08-19T12:56:54.0000000Z
+template: cliagent-1.0.0
+language: 1033

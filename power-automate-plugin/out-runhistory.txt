@@ -1,0 +1,20 @@
+﻿
+=== set_current_env ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"envId\": \"d923c0e5-f81e-e58f-84c0-52fac05dacab\",\n  \"displayName\": \"AndysDev\",\n  \"source\": \"set_tool\",\n  \"updatedAt\": \"2026-08-19T12:39:21.729Z\"\n}"
+    }
+  ]
+}
+
+=== get_run_history ===
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "[\n  {\n    \"name\": \"08584144637388678479647095499CU12\",\n    \"startTime\": \"2026-08-19T12:39:06.6117967Z\",\n    \"endTime\": \"2026-08-19T12:39:07.5793409Z\",\n    \"status\": \"Failed\",\n    \"errorCode\": \"ActionFailed\",\n    \"errorMessage\": \"An action failed. No dependent actions succeeded.\"\n  }\n]"
+    }
+  ]
+}
