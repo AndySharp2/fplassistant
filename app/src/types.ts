@@ -34,6 +34,7 @@ export interface Player {
   expectedAssistsPer90: number;
   expectedGoalsConcededPer90: number;
   cleanSheetsPer90: number;
+  savesPer90: number;
   bonusPerGame: number;
   yellowCardsPer90: number;
   redCardsPer90: number;
@@ -76,6 +77,10 @@ export interface GameweekPrediction {
   fixtureDifficulty: number;
 }
 
+/** How the Fantasy Football Scout predicted line-ups view a player for the next fixture.
+ *  'unknown' means the snapshot is missing or stale, so absence carries no information. */
+export type ScoutStartLikelihood = 'start' | 'bench' | 'unknown';
+
 export interface PlayerProjection {
   playerId: number;
   webName: string;
@@ -84,6 +89,7 @@ export interface PlayerProjection {
   priceNowTenths: number;
   perGameweek: GameweekPrediction[];
   horizonTotal: number;
+  scoutStatus: ScoutStartLikelihood;
 }
 
 export interface TransferSuggestion {

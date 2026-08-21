@@ -1,6 +1,5 @@
 import type { Fixture, Player, PlayerProjection, Team } from '../types';
-import { SCOUT_PREDICTED_STARTER_IDS } from './scoutPredictedLineups';
-import { estimateFixtureBpsScore, projectPlayer } from './scoring';
+import { buildScoutStartLookup, deriveStrengthBaseline, estimateFixtureBpsScore, projectPlayer, type ScoutLineups } from './scoring';
 
 /** Builds gameweek-by-gameweek projections for every player, for gameweeks [startEvent, startEvent+horizon). */
 export function buildAllProjections(
@@ -9,10 +8,13 @@ export function buildAllProjections(
   fixtures: Fixture[],
   startEvent: number,
   horizon: number,
-  isPreSeason = false
+  isPreSeason = false,
+  scoutLineups?: ScoutLineups
 ): Map<number, PlayerProjection> {
   const teamsById = new Map(teams.map((t) => [t.id, t]));
   const horizonGameweeks = Array.from({ length: horizon }, (_, i) => startEvent + i);
+  const scoutStartByPlayerId = buildScoutStartLookup(players, scoutLineups);
+  const strengthBaseline = deriveStrengthBaseline(teams);
 
   const fixturesByEvent = new Map<number, Fixture[]>();
   for (const fixture of fixtures) {
@@ -44,7 +46,8 @@ export function buildAllProjections(
               fixture,
               isHome,
               isPreSeason,
-              scoutPredictsStart: SCOUT_PREDICTED_STARTER_IDS.has(player.id),
+              scoutStart: scoutStartByPlayerId.get(player.id),
+              strengthBaseline,
             }),
           };
         })
@@ -76,7 +79,7 @@ export function buildAllProjections(
 
   const projections = new Map<number, PlayerProjection>();
   for (const player of players) {
-    projections.set(player.id, projectPlayer({ player, teams: teamsById, fixturesByEvent, horizonGameweeks, isPreSeason, bonusByFixtureId }));
+    projections.set(player.id, projectPlayer({ player, teams: teamsById, fixturesByEvent, horizonGameweeks, isPreSeason, bonusByFixtureId, scoutStart: scoutStartByPlayerId.get(player.id) }));
   }
   return projections;
 }

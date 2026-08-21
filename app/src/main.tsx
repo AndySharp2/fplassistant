@@ -1,6 +1,5 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { FluentProvider, webDarkTheme } from '@fluentui/react-components'
 import './index.css'
 import App from './App.tsx'
 import { AppDataProvider } from './context/AppDataContext'
@@ -33,10 +32,8 @@ void invalidateStaleClientState()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <FluentProvider theme={webDarkTheme} style={{ minHeight: '100vh' }}>
-      <AppDataProvider key={APP_STATE_VERSION}>
-        <App />
-      </AppDataProvider>
-    </FluentProvider>
+    <AppDataProvider key={APP_STATE_VERSION}>
+      <App />
+    </AppDataProvider>
   </StrictMode>,
 )

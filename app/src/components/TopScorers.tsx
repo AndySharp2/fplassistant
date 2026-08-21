@@ -1,178 +1,115 @@
-import { useMemo, useState } from 'react';
-import {
-  makeStyles,
-  tokens,
-  Title2,
-  Text,
-  Card,
-  CardPreview,
-  Dropdown,
-  Option,
-  Badge,
-  Spinner,
-  MessageBar,
-  MessageBarBody,
-} from '@fluentui/react-components';
-import type { BadgeProps } from '@fluentui/react-components';
-import { TrophyRegular } from '@fluentui/react-icons';
-import { useAppData } from '../context/AppDataContext';
-import { PlayerShirt } from './PlayerShirt';
-import type { Position } from '../types';
+import { useMemo, useState } from 'react'
+import { Trophy } from 'lucide-react'
+import { useAppData } from '../context/AppDataContext'
+import { PlayerShirt } from './PlayerShirt'
+import type { Position } from '../types'
 
-const POSITION_COLOR: Record<Position, BadgeProps['color']> = {
-  GKP: 'warning',
-  DEF: 'informative',
-  MID: 'success',
-  FWD: 'danger',
-};
+type ScopeKey = 'next' | 'horizon'
 
 function formatPrice(tenths: number): string {
-  return `£${(tenths / 10).toFixed(1)}m`;
+  return `£${(tenths / 10).toFixed(1)}m`
 }
 
-const useStyles = makeStyles({
-  stack: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalL,
-  },
-  headerRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: tokens.spacingHorizontalM,
-  },
-  card: {
-    padding: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalL}`,
-  },
-  list: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalXS,
-  },
-  row: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: tokens.spacingHorizontalM,
-    padding: tokens.spacingVerticalS,
-    borderRadius: tokens.borderRadiusMedium,
-    backgroundColor: tokens.colorNeutralBackground2,
-  },
-  rank: {
-    width: '28px',
-    textAlign: 'center',
-    color: tokens.colorNeutralForeground3,
-  },
-  name: {
-    flexGrow: 1,
-    minWidth: 0,
-  },
-  centerState: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: tokens.spacingVerticalXXL,
-  },
-});
+function surfaceClassName() {
+  return 'rounded-[28px] border border-white/10 bg-white/8 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.30)]'
+}
 
-type ScopeKey = 'next' | 'horizon';
+function selectClassName() {
+  return 'h-11 rounded-2xl border border-white/10 bg-slate-950/55 px-4 text-sm text-white outline-none transition focus:border-emerald-300/40 focus:bg-slate-950/75 focus:ring-2 focus:ring-emerald-300/20'
+}
+
+const POSITION_STYLES: Record<Position, string> = {
+  GKP: 'border-amber-300/20 bg-amber-300/12 text-amber-100',
+  DEF: 'border-sky-300/20 bg-sky-300/12 text-sky-100',
+  MID: 'border-emerald-300/20 bg-emerald-300/12 text-emerald-100',
+  FWD: 'border-rose-300/20 bg-rose-300/12 text-rose-100',
+}
 
 export function TopScorers() {
-  const styles = useStyles();
-  const { players, teamsById, projections, projectionsLoading, projectionsError, currentEvent, horizonGameweeks } = useAppData();
-  const [positionFilter, setPositionFilter] = useState<Position | 'ALL'>('ALL');
-  const [scope, setScope] = useState<ScopeKey>('next');
+  const { players, teamsById, projections, projectionsLoading, projectionsError, currentEvent, horizonGameweeks } = useAppData()
+  const [positionFilter, setPositionFilter] = useState<Position | 'ALL'>('ALL')
+  const [scope, setScope] = useState<ScopeKey>('next')
 
   const ranked = useMemo(() => {
     return players
       .filter((p) => positionFilter === 'ALL' || p.position === positionFilter)
       .map((p) => {
-        const proj = projections.get(p.id);
-        const nextGw = proj?.perGameweek[0]?.expectedPoints ?? 0;
-        const horizon = proj?.horizonTotal ?? 0;
-        return { player: p, nextGw, horizon };
+        const proj = projections.get(p.id)
+        const nextGw = proj?.perGameweek[0]?.expectedPoints ?? 0
+        const horizon = proj?.horizonTotal ?? 0
+        return { player: p, nextGw, horizon }
       })
       .filter((r) => r.nextGw > 0 || r.horizon > 0)
       .sort((a, b) => (scope === 'next' ? b.nextGw - a.nextGw : b.horizon - a.horizon))
-      .slice(0, 25);
-  }, [players, projections, positionFilter, scope]);
+      .slice(0, 25)
+  }, [players, projections, positionFilter, scope])
 
   if (projectionsLoading) {
     return (
-      <div className={styles.centerState}>
-        <Spinner label="Calculating predicted scores..." />
+      <div className="flex items-center justify-center rounded-[28px] border border-white/10 bg-white/6 px-6 py-16 backdrop-blur-2xl">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-300/30 border-t-emerald-300" />
       </div>
-    );
+    )
   }
 
   return (
-    <div className={styles.stack}>
-      <div className={styles.headerRow}>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Title2>AI Top Scorers</Title2>
-          <Text block>
+          <h2 className="display-font text-2xl font-bold text-white">AI Top Scorers</h2>
+          <p className="mt-2 text-sm text-white/75">
             Predicted top performers for {scope === 'next' ? `Gameweek ${currentEvent}` : `the next ${horizonGameweeks} gameweeks`}
-          </Text>
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: tokens.spacingHorizontalS }}>
-          <Dropdown
-            value={scope === 'next' ? 'This gameweek' : 'Next gameweeks'}
-            selectedOptions={[scope]}
-            onOptionSelect={(_, data) => setScope(data.optionValue as ScopeKey)}
-          >
-            <Option value="next">This gameweek</Option>
-            <Option value="horizon" text={`Next ${horizonGameweeks} gameweeks`}>
-              Next {horizonGameweeks} gameweeks
-            </Option>
-          </Dropdown>
-          <Dropdown
-            value={positionFilter === 'ALL' ? 'All positions' : positionFilter}
-            selectedOptions={[positionFilter]}
-            onOptionSelect={(_, data) => setPositionFilter(data.optionValue as Position | 'ALL')}
-          >
-            <Option value="ALL">All positions</Option>
-            <Option value="GKP">Goalkeepers</Option>
-            <Option value="DEF">Defenders</Option>
-            <Option value="MID">Midfielders</Option>
-            <Option value="FWD">Forwards</Option>
-          </Dropdown>
+
+        <div className="flex flex-wrap gap-3">
+          <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-3 text-sm text-white/70">
+            <span className="text-xs uppercase tracking-[0.24em] text-white/35">Scope</span>
+            <select className={selectClassName()} value={scope} onChange={(event) => setScope(event.target.value as ScopeKey)}>
+              <option value="next">This gameweek</option>
+              <option value="horizon">Next {horizonGameweeks} gameweeks</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-3 text-sm text-white/70">
+            <span className="text-xs uppercase tracking-[0.24em] text-white/35">Position</span>
+            <select className={selectClassName()} value={positionFilter} onChange={(event) => setPositionFilter(event.target.value as Position | 'ALL')}>
+              <option value="ALL">All positions</option>
+              <option value="GKP">Goalkeepers</option>
+              <option value="DEF">Defenders</option>
+              <option value="MID">Midfielders</option>
+              <option value="FWD">Forwards</option>
+            </select>
+          </label>
         </div>
       </div>
 
       {projectionsError && (
-        <MessageBar intent="warning">
-          <MessageBarBody>Predictions unavailable: {projectionsError}</MessageBarBody>
-        </MessageBar>
+        <div className="rounded-[22px] border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-50">
+          Predictions unavailable: {projectionsError}
+        </div>
       )}
 
-      <Card className={styles.card}>
-        <CardPreview>
-          <div className={styles.list}>
-            {ranked.map((r, i) => {
-              const team = teamsById.get(r.player.teamId);
-              return (
-                <div className={styles.row} key={r.player.id}>
-                  <Text className={styles.rank} weight={i < 3 ? 'bold' : 'regular'}>
-                    {i === 0 ? <TrophyRegular /> : i + 1}
-                  </Text>
-                  <PlayerShirt teamId={r.player.teamId} position={r.player.position} teamShortName={team?.shortName ?? '?'} />
-                  <Badge color={POSITION_COLOR[r.player.position]} shape="rounded">
-                    {r.player.position}
-                  </Badge>
-                  <Text className={styles.name}>
-                    {r.player.webName} ({team?.shortName}) - {formatPrice(r.player.nowCostTenths)}
-                  </Text>
-                  <Badge appearance="tint" color="brand" size="large">
-                    {(scope === 'next' ? r.nextGw : r.horizon).toFixed(2)} xPts
-                  </Badge>
+      <div className={surfaceClassName()}>
+        <div className="space-y-2 p-6">
+          {ranked.map((r, i) => {
+            const team = teamsById.get(r.player.teamId)
+            return (
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 backdrop-blur-xl" key={r.player.id}>
+                <div className="w-7 text-center text-sm font-semibold text-white/70">{i === 0 ? <Trophy className="h-4 w-4" /> : i + 1}</div>
+                <PlayerShirt teamId={r.player.teamId} position={r.player.position} teamShortName={team?.shortName ?? '?'} />
+                <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${POSITION_STYLES[r.player.position]}`}>{r.player.position}</span>
+                <div className="min-w-0 flex-1 text-white">
+                  {r.player.webName} <span className="text-white/70">({team?.shortName})</span> - {formatPrice(r.player.nowCostTenths)}
                 </div>
-              );
-            })}
-            {ranked.length === 0 && <Text italic>No predictions available yet.</Text>}
-          </div>
-        </CardPreview>
-      </Card>
+                <div className="inline-flex rounded-full border border-emerald-300/20 bg-emerald-300/12 px-3 py-1 text-xs font-semibold text-emerald-100">
+                  {(scope === 'next' ? r.nextGw : r.horizon).toFixed(2)} xPts
+                </div>
+              </div>
+            )
+          })}
+          {ranked.length === 0 && <p className="text-sm text-white/75">No predictions available yet.</p>}
+        </div>
+      </div>
     </div>
-  );
+  )
 }

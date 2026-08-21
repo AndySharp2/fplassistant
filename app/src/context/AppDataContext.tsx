@@ -22,7 +22,10 @@ interface AppDataValue {
   projections: Map<number, PlayerProjection>;
   projectionsLoading: boolean;
   projectionsError: string | null;
+  /** Gameweeks the scoring model looks ahead when making decisions. */
   horizonGameweeks: number;
+  /** Gameweeks that actually have projections, so the UI knows how far it can be browsed. */
+  availableGameweeks: number;
 }
 
 const AppDataContext = createContext<AppDataValue | null>(null);
@@ -37,6 +40,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [projections, setProjections] = useState<Map<number, PlayerProjection>>(new Map());
   const [projectionsLoading, setProjectionsLoading] = useState(true);
   const [projectionsError, setProjectionsError] = useState<string | null>(null);
+  const [availableGameweeks, setAvailableGameweeks] = useState(HORIZON_GAMEWEEKS);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,7 +61,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const remainingGameweeks = getRemainingSeasonGameweeks(bootstrap.currentEvent);
         try {
           const bundle = await getProjections(remainingGameweeks);
-          if (!cancelled) setProjections(bundle.projectionsByPlayerId);
+          if (!cancelled) {
+            setProjections(bundle.projectionsByPlayerId);
+            const projected = bundle.projectionsByPlayerId.values().next().value?.perGameweek.length ?? remainingGameweeks;
+            setAvailableGameweeks(Math.max(1, projected));
+          }
         } catch (projectionErr) {
           if (!cancelled) {
             setProjectionsError(projectionErr instanceof Error ? projectionErr.message : 'Failed to compute expected points.');
@@ -92,6 +100,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     projectionsLoading,
     projectionsError,
     horizonGameweeks: HORIZON_GAMEWEEKS,
+    availableGameweeks,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

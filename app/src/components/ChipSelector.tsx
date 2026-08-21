@@ -1,4 +1,3 @@
-import { makeStyles, tokens, Text, Button, Badge } from '@fluentui/react-components';
 import {
   WandRegular,
   ArrowSwapRegular,
@@ -6,6 +5,7 @@ import {
   StarEmphasisRegular,
 } from '@fluentui/react-icons';
 import type { ReactElement } from 'react';
+import { card } from '../lib/ui';
 import type { Chip, Squad } from '../types';
 
 const CHIP_META: Record<Chip, { label: string; description: string; icon: ReactElement }> = {
@@ -31,49 +31,44 @@ const CHIP_META: Record<Chip, { label: string; description: string; icon: ReactE
   },
 };
 
-const useStyles = makeStyles({
-  row: {
-    display: 'flex',
-    gap: tokens.spacingHorizontalS,
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
-});
-
 export function ChipSelector({ squad, updateSquad }: { squad: Squad; updateSquad: (fn: (prev: Squad) => Squad) => void }) {
-  const styles = useStyles();
-
   function toggleChip(chip: Chip) {
     updateSquad((prev) => ({ ...prev, activeChip: prev.activeChip === chip ? null : chip }));
   }
 
   return (
-    <div>
-      <Text weight="semibold" block style={{ marginBottom: tokens.spacingVerticalXS }}>
-        Chips
-      </Text>
-      <div className={styles.row}>
+    <div className="space-y-4">
+      <h3 className="eyebrow">Chips</h3>
+      <div className={`${card()} grid gap-2 p-3 sm:grid-cols-2`}>
         {(Object.keys(CHIP_META) as Chip[]).map((chip) => {
           const available = squad.chipsAvailable.includes(chip);
           const active = squad.activeChip === chip;
+          const disabled = !available && !active;
           return (
-            <Button
+            <button
               key={chip}
-              appearance={active ? 'primary' : 'outline'}
-              icon={CHIP_META[chip].icon}
-              disabled={!available && !active}
+              type="button"
+              disabled={disabled}
+              aria-pressed={active}
               onClick={() => toggleChip(chip)}
-              title={CHIP_META[chip].description}
+              className={`flex min-h-11 items-start gap-3 rounded-[13px] border px-4 py-3 text-left transition ${
+                active
+                  ? 'border-[#00ff87]/35 bg-[#00ff87]/12 text-[#f2ecf7]'
+                  : 'border-white/[0.07] bg-white/[0.025] text-[#f2ecf7] hover:bg-white/[0.06]'
+              } ${disabled ? 'cursor-not-allowed opacity-45' : ''}`}
             >
-              {CHIP_META[chip].label}
-            </Button>
+              <span className="mt-0.5 shrink-0 text-[#00ff87]" aria-hidden="true">
+                {CHIP_META[chip].icon}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[13px] font-semibold">{CHIP_META[chip].label}</span>
+                {/* Previously only in a title tooltip, so it was unreachable on touch and by keyboard. */}
+                <span className="mt-0.5 block text-[11px] leading-snug text-[#9d8fb0]">{CHIP_META[chip].description}</span>
+                {active && <span className="mt-1 block text-[11px] font-semibold text-[#00ff87]">Active this gameweek</span>}
+              </span>
+            </button>
           );
         })}
-        {squad.activeChip && (
-          <Badge appearance="tint" color="brand">
-            {CHIP_META[squad.activeChip].label} active this gameweek
-          </Badge>
-        )}
       </div>
     </div>
   );

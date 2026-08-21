@@ -1,16 +1,129 @@
-:root {
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import 'tailwindcss';
+
+/* Design tokens taken from the redesign concept: purple-black base, FPL green accent,
+   and a lavender-grey text ramp. Exposed to Tailwind so components stop hardcoding
+   near-miss values. */
+@theme {
+  --color-base: #0b0610;
+  --color-plum: #2a0733;
+  --color-panel: #37003c;
+
+  --color-ink: #f2ecf7;
+  --color-ink-soft: #d8cfe2;
+  --color-ink-muted: #b7a9c6;
+  --color-ink-dim: #9d8fb0;
+  --color-ink-faint: #7d7089;
+
+  --color-accent: #00ff87;
+  --color-accent-deep: #00c46a;
+  --color-accent-ink: #0d2b1c;
+
+  --color-danger: #ff5f6d;
+  --color-danger-soft: #ff8f9a;
+  --color-warn: #ffb86c;
+
+  --color-hairline: rgba(255, 255, 255, 0.07);
+  --color-hairline-strong: rgba(255, 255, 255, 0.12);
+
+  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --radius-field: 11px;
+  --radius-card: 18px;
+  --radius-pitch: 20px;
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer base {
+  :root {
+    color-scheme: dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    color: #f2ecf7;
+    background:
+      radial-gradient(1200px 600px at 12% -10%, #2a0733 0%, rgba(42, 7, 51, 0) 60%),
+      #0b0610;
+    font-family: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .display-font {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    letter-spacing: -0.03em;
+  }
+
+  /* Every figure in the app - prices, xPts, counts - is tabular so columns line up and
+     digits stop shifting width as values change. */
+  .num {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.04em;
+  }
+
+  /* Small uppercase section label used throughout the concept. */
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: #9d8fb0;
+  }
+
+  ::selection {
+    background: #00ff87;
+    color: #1a0020;
+  }
+
+  a {
+    color: #00ff87;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: #7dffbf;
+  }
+
+  :focus-visible {
+    outline: 2px solid #00ff87;
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

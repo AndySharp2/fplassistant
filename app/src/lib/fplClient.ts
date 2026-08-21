@@ -17,6 +17,11 @@ const POSITION_BY_TYPE: Record<number, Position> = {
 const cache = new Map<string, { expiresAt: number; value: unknown }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+// Card rates are per-90, so a player with a couple of substitute appearances and one booking
+// would otherwise read as ~7 yellows per 90 and be scored several points below everyone else.
+// Dividing by at least five full games' worth of minutes keeps small samples in a sane range.
+const MIN_MINUTES_FOR_RATE = 450;
+
 export function clearFplClientCache(): void {
   cache.clear();
 }
@@ -69,6 +74,7 @@ interface BootstrapResponse {
     expected_assists_per_90: string;
     expected_goals_conceded_per_90: string;
     clean_sheets_per_90: string;
+    saves_per_90: string;
     bonus: number;
     yellow_cards: number;
     red_cards: number;
@@ -129,9 +135,10 @@ export async function getPlayers(): Promise<Player[]> {
     expectedAssistsPer90: Number(e.expected_assists_per_90) || 0,
     expectedGoalsConcededPer90: Number(e.expected_goals_conceded_per_90) || 0,
     cleanSheetsPer90: Number(e.clean_sheets_per_90) || 0,
+    savesPer90: Number(e.saves_per_90) || 0,
     bonusPerGame: e.starts > 0 ? e.bonus / Math.max(e.starts, 1) : 0,
-    yellowCardsPer90: e.minutes > 0 ? e.yellow_cards / (e.minutes / 90) : 0,
-    redCardsPer90: e.minutes > 0 ? e.red_cards / (e.minutes / 90) : 0,
+    yellowCardsPer90: e.minutes > 0 ? e.yellow_cards / (Math.max(e.minutes, MIN_MINUTES_FOR_RATE) / 90) : 0,
+    redCardsPer90: e.minutes > 0 ? e.red_cards / (Math.max(e.minutes, MIN_MINUTES_FOR_RATE) / 90) : 0,
   }));
 }
 

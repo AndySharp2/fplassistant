@@ -8,15 +8,23 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "refresh:scout-lineups": "node ../scripts/refresh-scout-predicted-lineups.mjs"
+    "refresh:scout-lineups": "node ../scripts/refresh-scout-predicted-lineups.mjs",
+    "refresh:scout-lineups:dataverse": "node ../scripts/refresh-scout-predicted-lineups.mjs --dataverse",
+    "refresh:scout-lineups:file": "node ../scripts/refresh-scout-predicted-lineups.mjs --file"
   },
   "dependencies": {
     "@fluentui/react-components": "^9.74.6",
     "@fluentui/react-icons": "^2.0.337",
+    "@headlessui/react": "^2.2.10",
     "@microsoft/power-apps": "^1.2.5",
-    "javascript-lp-solver": "^1.0.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "clsx": "^2.1.1",
+    "framer-motion": "^13.1.1",
+    "lucide-react": "^1.33.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.85.0",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

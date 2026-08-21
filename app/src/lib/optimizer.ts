@@ -5,10 +5,18 @@
 // budget, club-count and bench-order knock-on effects are all reflected in the
 // next step.
 import type { Player, PlayerProjection, RecommendationResult, Squad, TransferSuggestion } from '../types';
-import { pickBestFormationForGameweek, scoreSquadFromGameweek } from './squadEvaluation';
+import { pickBestFormationForGameweek, scoreSquadFromGameweek, validateFullSquad } from './squadEvaluation';
 
 const MAX_PER_CLUB = 3;
 const TRANSFER_COST = 4;
+
+/** FPL sells a player for their purchase price plus half of any rise, rounded down to 0.1m.
+ *  Using the current price instead would overstate available funds and produce transfer
+ *  plans the manager cannot actually afford. */
+function sellingPriceTenths(purchasePrice: number, nowCostTenths: number): number {
+  if (nowCostTenths <= purchasePrice) return nowCostTenths;
+  return purchasePrice + Math.floor((nowCostTenths - purchasePrice) / 2);
+}
 
 export interface RecommendInput {
   squad: Squad;
@@ -34,6 +42,18 @@ export function recommendTransfers({ squad, players, projections, startGameweek,
   let hitTaken = false;
   let earliestAllowedGameweek = startGameweek;
 
+  const sellingPrices = new Map<number, number>();
+  for (const sp of squad.players) {
+    const player = players.get(sp.playerId);
+    if (player) sellingPrices.set(sp.playerId, sellingPriceTenths(sp.purchasePrice, player.nowCostTenths));
+  }
+
+  // Each step only sees the squad as it stands after the previous one, so without these a
+  // player sold in an early gameweek looks like a fresh signing later on and the plan pays
+  // two transfers to end up where it started.
+  const tradedOutIds = new Set<number>();
+  const tradedInIds = new Set<number>();
+
   while (suggestions.length < maxSuggestions) {
     const step = findBestTransferStep({
       squad,
@@ -41,6 +61,9 @@ export function recommendTransfers({ squad, players, projections, startGameweek,
       bank: workingBank,
       projections,
       players,
+      sellingPrices,
+      tradedOutIds,
+      tradedInIds,
       allowHit: !unlimitedTransfers && squad.activeChip !== 'wildcard' && squad.activeChip !== 'freehit' && !hitTaken,
       transferBank,
       startGameweek,
@@ -48,6 +71,11 @@ export function recommendTransfers({ squad, players, projections, startGameweek,
     });
 
     if (!step) break;
+
+    // Reject any step that would make the squad illegal, rather than discovering it only
+    // at the end and throwing away the whole plan.
+    const nextSquadPlayers = applySuggestionToSquadPlayers(workingSquadPlayers, players, step.suggestion);
+    if (validateFullSquad(nextSquadPlayers, players).length > 0 || step.workingBank < 0) break;
 
     if (step.suggestion.transferCost === 0) {
       transferBank.useFreeTransfer(step.suggestion.recommendedGameweek - startGameweek);
@@ -57,8 +85,17 @@ export function recommendTransfers({ squad, players, projections, startGameweek,
 
     suggestions.push(step.suggestion);
     earliestAllowedGameweek = step.suggestion.recommendedGameweek;
+    tradedOutIds.add(step.suggestion.out.playerId);
+    tradedInIds.add(step.suggestion.in.playerId);
     workingPlayers = step.workingPlayers;
-    workingSquadPlayers = applySuggestionToSquadPlayers(workingSquadPlayers, players, step.suggestion);
+    workingSquadPlayers = nextSquadPlayers;
+    // A player just bought can only ever be sold for what was paid for them.
+    sellingPrices.delete(step.suggestion.out.playerId);
+    sellingPrices.set(step.suggestion.in.playerId, step.suggestion.in.priceTenths);
+    // Must carry the post-swap bank into the next iteration, otherwise later steps in a
+    // multi-transfer plan re-check affordability against the pre-plan balance and can
+    // recommend a combined plan that would blow the £100m budget once applied together.
+    workingBank = step.workingBank;
 
     if (hitTaken) break;
   }
@@ -69,7 +106,7 @@ export function recommendTransfers({ squad, players, projections, startGameweek,
     return b.horizonPointsGain - a.horizonPointsGain;
   });
 
-  const resultingSquad = buildResultingSquad({
+  let resultingSquad = buildResultingSquad({
     squad,
     squadPlayers: workingSquadPlayers,
     players,
@@ -77,6 +114,18 @@ export function recommendTransfers({ squad, players, projections, startGameweek,
     bank: Number.isFinite(workingBank) ? workingBank : squad.bank,
     freeTransfers: transferBank.finalFreeTransfers(),
   });
+
+  // Hard backstop: a legal plan must keep exactly 15 players within budget. If anything
+  // upstream ever miscalculates, fall back to the untouched squad rather than ship an
+  // illegal one - "Make all transfers" must never be able to break these rules.
+  const invariantIssues = validateFullSquad(resultingSquad.players, players);
+  if (invariantIssues.length > 0) {
+    notes.push(`Transfer plan was discarded because it would have produced an invalid squad: ${invariantIssues.join(' ')}`);
+    resultingSquad = squad;
+    // The individual suggestions are only valid as a set - showing them after discarding
+    // the plan would recommend transfers that break the rules once applied.
+    suggestions.length = 0;
+  }
 
   if (preSeason || unlimitedTransfers) {
     notes.push("It's before Gameweek 1 deadline - all transfers are free while you set up your squad.");
@@ -156,6 +205,9 @@ function findBestTransferStep({
   bank,
   projections,
   players,
+  sellingPrices,
+  tradedOutIds,
+  tradedInIds,
   allowHit,
   transferBank,
   startGameweek,
@@ -166,6 +218,9 @@ function findBestTransferStep({
   bank: number;
   projections: Map<number, PlayerProjection>;
   players: Map<number, Player>;
+  sellingPrices: Map<number, number>;
+  tradedOutIds: Set<number>;
+  tradedInIds: Set<number>;
   allowHit: boolean;
   transferBank: {
     bankByWeek: number[];
@@ -184,12 +239,17 @@ function findBestTransferStep({
   for (const outPlayer of squadPlayers) {
     const outProjection = projections.get(outPlayer.id);
     if (!outProjection) continue;
+    // Selling someone an earlier step bought would spend two transfers to achieve nothing.
+    if (tradedInIds.has(outPlayer.id)) continue;
 
-    const budget = bank + (players.get(outPlayer.id)?.nowCostTenths ?? 0);
+    const budget = bank + (sellingPrices.get(outPlayer.id) ?? outPlayer.nowCostTenths);
 
     for (const candidate of projections.values()) {
       if (squadIds.has(candidate.playerId)) continue;
+      if (tradedOutIds.has(candidate.playerId)) continue;
       if (candidate.position !== outPlayer.position) continue;
+      // Never transfer in someone the predicted line-ups have on the bench.
+      if (candidate.scoutStatus === 'bench') continue;
       if ((candidate.perGameweek[0]?.expectedPoints ?? 0) <= 0) continue;
       if (candidate.horizonTotal <= 0) continue;
       if (candidate.priceNowTenths > budget) continue;
@@ -225,9 +285,12 @@ function findBestTransferStep({
         earliestAllowedGameweek,
       });
 
-      const weekIndex = Math.max(0, recommendedGameweek - startGameweek);
-      const freeTransfersAvailable = transferBank.bankByWeek[weekIndex] ?? 0;
-      const freeTransfersUsed = transferBank.usedFreeTransfersByWeek[weekIndex] ?? 0;
+      const recommendedGameweekIndex = Math.max(0, recommendedGameweek - startGameweek);
+      const candidateGameweekPoints = candidate.perGameweek[recommendedGameweekIndex]?.expectedPoints ?? 0;
+      if (candidateGameweekPoints <= 0) continue;
+
+      const freeTransfersAvailable = transferBank.bankByWeek[recommendedGameweekIndex] ?? 0;
+      const freeTransfersUsed = transferBank.usedFreeTransfersByWeek[recommendedGameweekIndex] ?? 0;
       const transferCost = freeTransfersAvailable > freeTransfersUsed ? 0 : allowHit ? -TRANSFER_COST : Number.NEGATIVE_INFINITY;
       const netGain = round2(horizonPointsGain + transferCost);
       if (netGain <= 0) continue;
@@ -246,7 +309,7 @@ function findBestTransferStep({
         best = {
           suggestion,
           workingPlayers: hypotheticalPlayers,
-          workingBank: bank + (players.get(outPlayer.id)?.nowCostTenths ?? 0) - candidatePlayer.nowCostTenths,
+          workingBank: bank + (sellingPrices.get(outPlayer.id) ?? outPlayer.nowCostTenths) - candidatePlayer.nowCostTenths,
         };
       }
     }

@@ -97,6 +97,7 @@ function Add-DataverseColumnIfNotExists {
         "Integer"  = @{ "@odata.type" = "Microsoft.Dynamics.CRM.IntegerAttributeMetadata"; "AttributeType" = "Integer"; "MinValue" = -2147483648; "MaxValue" = 2147483647; "Format" = "None" }
         "Boolean"  = @{ "@odata.type" = "Microsoft.Dynamics.CRM.BooleanAttributeMetadata"; "AttributeType" = "Boolean"; "DefaultValue" = $false; "OptionSet" = @{ "@odata.type" = "Microsoft.Dynamics.CRM.BooleanOptionSetMetadata"; "TrueOption" = @{ "Value" = 1; "Label" = @{ "@odata.type" = "Microsoft.Dynamics.CRM.Label"; "LocalizedLabels" = @(@{ "@odata.type" = "Microsoft.Dynamics.CRM.LocalizedLabel"; "Label" = "Yes"; "LanguageCode" = 1033 }) } }; "FalseOption" = @{ "Value" = 0; "Label" = @{ "@odata.type" = "Microsoft.Dynamics.CRM.Label"; "LocalizedLabels" = @(@{ "@odata.type" = "Microsoft.Dynamics.CRM.LocalizedLabel"; "Label" = "No"; "LanguageCode" = 1033 }) } } } }
         "Memo"     = @{ "@odata.type" = "Microsoft.Dynamics.CRM.MemoAttributeMetadata"; "AttributeType" = "Memo"; "MaxLength" = 100000; "Format" = "TextArea" }
+        "DateTime" = @{ "@odata.type" = "Microsoft.Dynamics.CRM.DateTimeAttributeMetadata"; "AttributeType" = "DateTime"; "Format" = "DateAndTime"; "DateTimeBehavior" = @{ "Value" = "TimeZoneIndependent" } }
     }
     $column = $columnTypes[$Type].Clone()
     $column["SchemaName"] = $SchemaName
@@ -143,6 +144,7 @@ Write-Host "Publisher prefix: $prefix" -ForegroundColor Cyan
 $squadTable = "${prefix}_squad"
 $squadPlayerTable = "${prefix}_squadplayer"
 $recommendationTable = "${prefix}_recommendationlog"
+$scoutLineupTable = "${prefix}_scoutlineup"
 
 New-DataverseTableIfNotExists -SchemaName $squadTable -DisplayName "FPL Squad" -PluralDisplayName "FPL Squads" -PrimaryColumnName "${prefix}_name" -PrimaryColumnDisplayName "Name" -BaseUrl $baseUrl -Headers $headers
 Add-DataverseColumnIfNotExists -TableName $squadTable -SchemaName "${prefix}_banktenths" -DisplayName "Bank (tenths)" -Type "Integer" -BaseUrl $baseUrl -Headers $headers
@@ -164,4 +166,12 @@ Add-DataverseColumnIfNotExists -TableName $recommendationTable -SchemaName "${pr
 Add-DataverseColumnIfNotExists -TableName $recommendationTable -SchemaName "${prefix}_actioned" -DisplayName "Actioned" -Type "Boolean" -BaseUrl $baseUrl -Headers $headers
 Add-DataverseLookupIfNotExists -SourceTable $recommendationTable -TargetTable $squadTable -SchemaName "${prefix}_squadid_lookup" -DisplayName "Squad" -RelationshipSchemaName "${prefix}_${squadTable}_${recommendationTable}" -BaseUrl $baseUrl -Headers $headers
 
-Write-Host "`nDone. Tables: $squadTable, $squadPlayerTable, $recommendationTable (prefix: $prefix)" -ForegroundColor Green
+# Holds the latest Fantasy Football Scout predicted line-ups as a single refreshed row, so the
+# app reads live team news instead of a snapshot baked in at build time.
+New-DataverseTableIfNotExists -SchemaName $scoutLineupTable -DisplayName "FPL Scout Lineup" -PluralDisplayName "FPL Scout Lineups" -PrimaryColumnName "${prefix}_name" -PrimaryColumnDisplayName "Name" -BaseUrl $baseUrl -Headers $headers
+Add-DataverseColumnIfNotExists -TableName $scoutLineupTable -SchemaName "${prefix}_starteridsjson" -DisplayName "Predicted Starter Ids (JSON)" -Type "Memo" -BaseUrl $baseUrl -Headers $headers
+Add-DataverseColumnIfNotExists -TableName $scoutLineupTable -SchemaName "${prefix}_refreshedon" -DisplayName "Refreshed On" -Type "DateTime" -BaseUrl $baseUrl -Headers $headers
+Add-DataverseColumnIfNotExists -TableName $scoutLineupTable -SchemaName "${prefix}_teamcount" -DisplayName "Teams Matched" -Type "Integer" -BaseUrl $baseUrl -Headers $headers
+Add-DataverseColumnIfNotExists -TableName $scoutLineupTable -SchemaName "${prefix}_startercount" -DisplayName "Starters Matched" -Type "Integer" -BaseUrl $baseUrl -Headers $headers
+
+Write-Host "`nDone. Tables: $squadTable, $squadPlayerTable, $recommendationTable, $scoutLineupTable (prefix: $prefix)" -ForegroundColor Green

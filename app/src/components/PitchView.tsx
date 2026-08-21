@@ -1,166 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  makeStyles,
-  tokens,
-  Text,
-  Badge,
-  Caption1,
-  Button,
-  Tooltip,
-} from '@fluentui/react-components';
-import { StarRegular, StarFilled, DismissRegular, ArrowUpRegular, ArrowDownRegular } from '@fluentui/react-icons';
+import { ArrowDown, ArrowUp, Star, X } from 'lucide-react';
 import { PlayerShirt } from './PlayerShirt';
 import { useAppData } from '../context/AppDataContext';
+import { fdrStyle } from '../lib/ui';
 import type { Position, Squad } from '../types';
 import { pickBestFormationForGameweek } from '../lib/squadEvaluation';
 
-const useStyles = makeStyles({
-  pitch: {
-    background: `repeating-linear-gradient(0deg, #1e7d32, #1e7d32 40px, #237a37 40px, #237a37 80px)`,
-    borderRadius: tokens.borderRadiusLarge,
-    padding: tokens.spacingVerticalL,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalL,
-    border: `2px solid ${tokens.colorNeutralStroke1}`,
-  },
-  row: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: tokens.spacingHorizontalM,
-    flexWrap: 'wrap',
-    minHeight: '112px',
-    borderRadius: tokens.borderRadiusMedium,
-    padding: tokens.spacingVerticalXS,
-  },
-  rowDragOver: {
-    outline: `2px dashed ${tokens.colorNeutralForegroundOnBrand}`,
-    outlineOffset: '2px',
-  },
-  card: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '4px',
-    width: '98px',
-    minHeight: '138px',
-    padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalXS}`,
-    borderRadius: tokens.borderRadiusMedium,
-    backgroundColor: 'rgba(0, 0, 0, 0.28)',
-    boxShadow: `0 4px 12px ${tokens.colorNeutralShadowAmbient}`,
-    cursor: 'grab',
-    textAlign: 'center',
-  },
-  swapCandidate: {
-    outline: `3px solid ${tokens.colorBrandStroke1}`,
-    outlineOffset: '2px',
-    boxShadow: `0 0 0 2px ${tokens.colorBrandStroke1}, 0 4px 12px ${tokens.colorNeutralShadowAmbient}`,
-    cursor: 'pointer',
-  },
-  swapSource: {
-    outline: `3px solid ${tokens.colorStatusWarningForeground1}`,
-    outlineOffset: '2px',
-  },
-  shirtWrap: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '36px',
-    height: '36px',
-  },
-  name: {
-    color: '#fff',
-    fontSize: '11px',
-    lineHeight: '1.1',
-    maxWidth: '88px',
-    minHeight: '24px',
-    whiteSpace: 'normal',
-    display: '-webkit-box',
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-  },
-  infoStack: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1px',
-  },
-  fixtureLine: {
-    color: '#f5f5f5',
-    fontSize: '10px',
-    lineHeight: '1.1',
-  },
-  xpts: {
-    color: '#e8ffe8',
-    fontSize: '10px',
-    lineHeight: '1.1',
-  },
-  meta: {
-    color: '#d7d7e0',
-    fontSize: '10px',
-    lineHeight: '1.1',
-  },
-  captainRow: {
-    display: 'flex',
-    gap: '4px',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-  },
-  bench: {
-    backgroundColor: tokens.colorNeutralBackground3,
-    borderRadius: tokens.borderRadiusMedium,
-    padding: tokens.spacingVerticalM,
-  },
-  benchLabel: {
-    marginBottom: tokens.spacingVerticalXS,
-  },
-  benchRow: {
-    display: 'flex',
-    gap: tokens.spacingHorizontalM,
-    flexWrap: 'wrap',
-  },
-  benchCard: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '4px',
-    width: '98px',
-    minHeight: '138px',
-    padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalXS}`,
-    borderRadius: tokens.borderRadiusMedium,
-    backgroundColor: tokens.colorNeutralBackground1,
-    boxShadow: `0 4px 12px ${tokens.colorNeutralShadowAmbient}`,
-    cursor: 'grab',
-    textAlign: 'center',
-  },
-  benchSwapCandidate: {
-    outline: `3px solid ${tokens.colorBrandStroke1}`,
-    outlineOffset: '2px',
-    cursor: 'pointer',
-  },
-  gwBar: {
-    display: 'flex',
-    justifyContent: 'flex-start',
-    marginBottom: tokens.spacingVerticalM,
-  },
-  gwRail: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: tokens.spacingHorizontalS,
-    padding: tokens.spacingVerticalXS,
-    paddingLeft: tokens.spacingHorizontalS,
-    borderLeft: `4px solid ${tokens.colorBrandStroke1}`,
-    backgroundColor: tokens.colorNeutralBackground2,
-    borderRadius: tokens.borderRadiusMedium,
-  },
-  gwChip: {
-    minWidth: '112px',
-    justifyContent: 'center',
-  },
-});
-
 const POSITION_ORDER: Position[] = ['GKP', 'DEF', 'MID', 'FWD'];
+
+function cardClassName(benchCard: boolean, candidate: boolean, source: boolean) {
+  const base = `flex w-[96px] flex-col items-center gap-1 rounded-[14px] border px-1.5 py-2 text-center backdrop-blur-md transition ${
+    benchCard ? 'border-white/[0.06] bg-[rgba(6,2,10,0.5)]' : 'border-white/[0.08] bg-[rgba(6,2,10,0.62)] shadow-[0_10px_24px_rgba(0,0,0,0.38)]'
+  }`;
+  const state = candidate ? 'ring-2 ring-[#00ff87] cursor-pointer' : 'cursor-grab';
+  const sourceState = source ? 'ring-2 ring-[#ffb86c]' : '';
+  return `${base} ${state} ${sourceState}`;
+}
 
 type PendingSwap = {
   playerId: number;
@@ -172,7 +27,6 @@ export function PitchView({
   updateSquad,
   onRemovePlayer,
   selectedGameweekIndex,
-  onSelectedGameweekChange,
   onBeginSwap,
   pendingSwap,
   onClearSwap,
@@ -181,20 +35,14 @@ export function PitchView({
   updateSquad: (fn: (prev: Squad) => Squad) => void;
   onRemovePlayer: (playerId: number) => void;
   selectedGameweekIndex: number;
-  onSelectedGameweekChange: (gameweekIndex: number) => void;
   onBeginSwap: (playerId: number, direction: 'toStarting' | 'toBench') => void;
   pendingSwap: PendingSwap;
   onClearSwap: () => void;
 }) {
-  const styles = useStyles();
   const { playersById, teamsById, projections, currentEvent, horizonGameweeks } = useAppData();
   const [dragOverRow, setDragOverRow] = useState<Position | 'bench' | null>(null);
   const [lineupLocked, setLineupLocked] = useState(false);
   const currentGameweek = currentEvent + selectedGameweekIndex;
-  const maxGameweekIndex = useMemo(() => {
-    const firstProjection = projections.values().next().value as { perGameweek?: { expectedPoints: number }[] } | undefined;
-    return Math.max(0, (firstProjection?.perGameweek?.length ?? 1) - 1);
-  }, [projections]);
 
   function xPts(playerId: number): number {
     return projections.get(playerId)?.perGameweek[selectedGameweekIndex]?.expectedPoints ?? 0;
@@ -430,77 +278,69 @@ export function PitchView({
     const team = teamsById.get(player.teamId);
     const candidate = isSwapCandidate(playerId);
     const source = pendingSwap?.playerId === playerId;
+    const fixture = projections.get(playerId)?.perGameweek[selectedGameweekIndex];
+    const armband = isCaptain ? 'C' : isViceCaptain ? 'V' : null;
+
     return (
       <div
         key={playerId}
-        className={`${benchCard ? styles.benchCard : styles.card} ${candidate ? (benchCard ? styles.benchSwapCandidate : styles.swapCandidate) : ''} ${source ? styles.swapSource : ''}`}
+        className={`group ${cardClassName(benchCard, candidate, source)}`}
         draggable
         onDragStart={(e) => handleDragStart(e, playerId)}
         onClick={candidate ? () => commitSwap(playerId) : undefined}
       >
-        <div className={styles.shirtWrap}>
+        <div className="relative flex items-center justify-center">
           <PlayerShirt teamId={player.teamId} position={player.position} teamShortName={team?.shortName ?? '?'} />
-        </div>
-        <Text className={benchCard ? undefined : styles.name}>{player.webName}</Text>
-        <div className={styles.infoStack}>
-          <Caption1 className={styles.fixtureLine}>{projectedFixtureLabel(playerId)}</Caption1>
-          <Caption1 className={styles.meta}>
-            {team?.shortName ?? '?'} · £{(player.nowCostTenths / 10).toFixed(1)}m
-          </Caption1>
-          <Caption1 className={benchCard ? undefined : styles.xpts}>
-            GW{currentGameweek} xPts: {xPts(playerId).toFixed(2)} / {horizonPts(playerId).toFixed(2)}
-          </Caption1>
-        </div>
-        <div className={styles.captainRow}>
-          {benchCard ? (
-            <Tooltip content="Move to starting XI" relationship="label">
-              <Button
-                appearance="transparent"
-                size="small"
-                icon={<ArrowUpRegular />}
-                onClick={() => onBeginSwap(playerId, 'toStarting')}
-              />
-            </Tooltip>
-          ) : (
-            <Tooltip content="Move to bench" relationship="label">
-              <Button
-                appearance="transparent"
-                size="small"
-                icon={<ArrowDownRegular />}
-                onClick={() => onBeginSwap(playerId, 'toBench')}
-              />
-            </Tooltip>
+          {armband && (
+            <span
+              className={`absolute -right-1.5 -top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full text-[10px] font-bold ${
+                isCaptain ? 'bg-[#00ff87] text-[#0d2b1c]' : 'bg-white/85 text-[#12002a]'
+              }`}
+            >
+              {armband}
+            </span>
           )}
-          <Button
-            appearance="transparent"
-            size="small"
-            icon={<DismissRegular />}
-            onClick={() => onRemovePlayer(playerId)}
-            title="Remove from squad"
-          />
         </div>
-        {!benchCard && (
-          <div className={styles.captainRow}>
-            <Tooltip content="Set as captain (2x points)" relationship="label">
-              <Button
-                appearance="transparent"
-                size="small"
-                icon={isCaptain ? <StarFilled /> : <StarRegular />}
-                onClick={() => setCaptain(playerId, false)}
-              />
-            </Tooltip>
-            {isViceCaptain && (
-              <Badge size="small" color="informative">
-                VC
-              </Badge>
-            )}
-            {!isViceCaptain && !isCaptain && (
-              <Button appearance="transparent" size="small" onClick={() => setCaptain(playerId, true)}>
-                VC
-              </Button>
-            )}
-          </div>
-        )}
+
+        <span className="w-full truncate text-[12px] font-semibold leading-tight text-[#f2ecf7]">{player.webName}</span>
+
+        <span className="flex items-center gap-1 text-[10px] leading-tight text-[#b7a9c6]">
+          {projectedFixtureLabel(playerId)}
+          {fixture && fixture.fixtureDifficulty > 0 && <span className={fdrStyle(fixture.fixtureDifficulty)}>{fixture.fixtureDifficulty}</span>}
+        </span>
+
+        <span className="num text-[13px] font-bold leading-none text-[#00ff87]">{xPts(playerId).toFixed(1)}</span>
+        <span className="num text-[10px] leading-none text-[#7d7089]">£{(player.nowCostTenths / 10).toFixed(1)}m</span>
+
+        {/* Controls stay hidden until the card is hovered or focused so the pitch reads as a team sheet. */}
+        <div className="mt-0.5 flex items-center gap-0.5 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
+          <button
+            type="button"
+            onClick={() => onBeginSwap(playerId, benchCard ? 'toStarting' : 'toBench')}
+            aria-label={benchCard ? `Move ${player.webName} to the starting XI` : `Move ${player.webName} to the bench`}
+            className="flex h-6 w-6 items-center justify-center rounded-[7px] text-[#9d8fb0] transition hover:bg-white/10 hover:text-[#f2ecf7]"
+          >
+            {benchCard ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />}
+          </button>
+          {!benchCard && (
+            <button
+              type="button"
+              onClick={() => setCaptain(playerId, !isCaptain && !isViceCaptain ? true : false)}
+              aria-label={`Make ${player.webName} ${isCaptain ? 'vice-captain' : 'captain'}`}
+              className="flex h-6 w-6 items-center justify-center rounded-[7px] text-[#9d8fb0] transition hover:bg-white/10 hover:text-[#00ff87]"
+            >
+              <Star className={`h-3.5 w-3.5 ${isCaptain ? 'fill-current text-[#00ff87]' : ''}`} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onRemovePlayer(playerId)}
+            aria-label={`Remove ${player.webName} from squad`}
+            className="flex h-6 w-6 items-center justify-center rounded-[7px] text-[#9d8fb0] transition hover:bg-[#ff5f6d]/20 hover:text-[#ff8f9a]"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
     );
   }
@@ -515,62 +355,55 @@ export function PitchView({
 
   return (
     <div>
-      <div className={styles.gwBar}>
-        <div className={styles.gwRail}>
-          <Text weight="semibold">Squad GW</Text>
-          <Button appearance="secondary" size="small" onClick={() => onSelectedGameweekChange(Math.max(0, selectedGameweekIndex - 1))} disabled={selectedGameweekIndex === 0}>
-            Previous
-          </Button>
-          <Badge className={styles.gwChip} appearance="tint" color="brand">
-            Gameweek {currentGameweek}
-          </Badge>
-          <Button appearance="secondary" size="small" onClick={() => onSelectedGameweekChange(Math.min(maxGameweekIndex, selectedGameweekIndex + 1))} disabled={selectedGameweekIndex >= maxGameweekIndex}>
-            Next
-          </Button>
-        </div>
-      </div>
       {pendingSwap && (
-        <div style={{ marginBottom: tokens.spacingVerticalS }}>
-          <Text>
-            Pick the player to replace. The source player is highlighted, and only legal swap targets are selectable.
-          </Text>
-          <Button appearance="subtle" size="small" onClick={onClearSwap} style={{ marginLeft: tokens.spacingHorizontalS }}>
+        <div className="mb-2.5 flex items-center gap-3 rounded-[13px] border border-[#ffb86c]/25 bg-[#ffb86c]/10 px-3.5 py-2.5">
+          <span className="text-[12px] text-[#ffb86c]">Pick the player to replace — only legal targets are selectable.</span>
+          <button type="button" onClick={onClearSwap} className="ml-auto text-[11px] font-semibold text-[#f2ecf7] underline-offset-2 hover:underline">
             Cancel
-          </Button>
+          </button>
         </div>
       )}
-      <div className={styles.pitch}>
-        {POSITION_ORDER.map((pos) => (
-          <div
-            key={pos}
-            className={`${styles.row} ${dragOverRow === pos ? styles.rowDragOver : ''}`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOverRow(pos);
-            }}
-            onDragLeave={() => setDragOverRow(null)}
-            onDrop={(e) => handleRowDrop(e, pos)}
-          >
-            {rows[pos].map((sp) => renderCard(sp.playerId, sp.isCaptain, sp.isViceCaptain))}
-          </div>
-        ))}
+      <div className="relative overflow-hidden rounded-[20px] border border-[#00ff87]/14 bg-[linear-gradient(180deg,#0f3a24_0%,#0a2a1a_50%,#071c12_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_24px_60px_rgba(0,0,0,0.5)]">
+        <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(180deg,rgba(255,255,255,0.035)_0px,rgba(255,255,255,0.035)_52px,rgba(255,255,255,0)_52px,rgba(255,255,255,0)_104px)]" />
+        <div className="pointer-events-none absolute inset-x-6 inset-y-4 rounded-[8px] border border-[#00ff87]/14" />
+        <div className="pointer-events-none absolute inset-y-4 left-1/2 w-px -translate-x-1/2 bg-[#00ff87]/10" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[100px] w-[100px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#00ff87]/10" />
+        <div className="relative flex flex-col gap-2 px-4 py-4">
+          {POSITION_ORDER.map((pos) => (
+            <div
+              key={pos}
+              className={`flex flex-wrap justify-center gap-2.5 rounded-[12px] py-1 ${dragOverRow === pos ? 'ring-2 ring-[#00ff87]/70' : ''}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOverRow(pos);
+              }}
+              onDragLeave={() => setDragOverRow(null)}
+              onDrop={(e) => handleRowDrop(e, pos)}
+            >
+              {rows[pos].map((sp) => renderCard(sp.playerId, sp.isCaptain, sp.isViceCaptain))}
+            </div>
+          ))}
+        </div>
       </div>
       <div
-        className={styles.bench}
+        className={`mt-2.5 rounded-[18px] border border-white/[0.08] bg-white/[0.03] p-3 ${dragOverRow === 'bench' ? 'ring-2 ring-[#00ff87]/70' : ''}`}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOverRow('bench');
         }}
         onDragLeave={() => setDragOverRow(null)}
         onDrop={handleBenchDrop}
-        style={dragOverRow === 'bench' ? { outline: `2px dashed ${tokens.colorBrandStroke1}` } : undefined}
       >
-        <Caption1 className={styles.benchLabel}>Bench</Caption1>
-        <div className={styles.benchRow}>{bench.map((sp) => renderCard(sp.playerId, false, false, true))}</div>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="eyebrow">Bench</span>
+          <span className="text-[11px] text-[#7d7089]">
+            GW{currentGameweek} <span className="num font-bold text-[#f2ecf7]">{teamNextGwPts.toFixed(1)}</span>
+            <span className="mx-1.5 text-[#7d7089]">·</span>
+            Next 3 <span className="num font-bold text-[#f2ecf7]">{teamHorizonPts.toFixed(1)}</span>
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2.5">{bench.map((sp) => renderCard(sp.playerId, false, false, true))}</div>
       </div>
-      <Text block style={{ marginTop: tokens.spacingVerticalM }}>
-        Team expected points - Next GW: <strong>{teamNextGwPts.toFixed(1)}</strong> · Next 3 GW: <strong>{teamHorizonPts.toFixed(1)}</strong>
-      </Text>
     </div>
   );
 }

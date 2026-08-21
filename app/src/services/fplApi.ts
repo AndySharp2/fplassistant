@@ -7,6 +7,7 @@ import { getFixtures as fetchFixtures, getPlayers, getTeams, getCurrentOrNextEve
 import { buildAllProjections } from '../lib/projections';
 import { recommendTransfers } from '../lib/optimizer';
 import { buildBestSquad, type BuiltSquad } from '../lib/squadBuilder';
+import { getScoutLineups } from './scoutLineupRepository';
 import type { Fixture, Player, PlayerProjection, RecommendationResult, Squad, Team } from '../types';
 
 export interface BootstrapResponse {
@@ -31,14 +32,15 @@ export async function getRecommendations(
   horizonGameweeks = 3,
   maxSuggestions = 5
 ): Promise<RecommendationResult> {
-  const [playersList, teams, fixtures, preSeason] = await Promise.all([
+  const [playersList, teams, fixtures, preSeason, scoutLineups] = await Promise.all([
     getPlayers(),
     getTeams(),
     fetchFixtures(),
     isPreSeason(),
+    getScoutLineups(),
   ]);
   const players = new Map(playersList.map((p) => [p.id, p]));
-  const projections = buildAllProjections(playersList, teams, fixtures, startGameweek, horizonGameweeks, preSeason);
+  const projections = buildAllProjections(playersList, teams, fixtures, startGameweek, horizonGameweeks, preSeason, scoutLineups);
 
   return recommendTransfers({ squad, players, projections, startGameweek, maxSuggestions, unlimitedTransfers: false, preSeason });
 }
@@ -51,26 +53,28 @@ export interface ProjectionsBundle {
 
 /** Fetches live data and computes horizon projections for the whole player pool - used for xPts displays and squad building. */
 export async function getProjections(horizonGameweeks = 3): Promise<ProjectionsBundle> {
-  const [playersList, teams, fixtures, currentEvent, preSeason] = await Promise.all([
+  const [playersList, teams, fixtures, currentEvent, preSeason, scoutLineups] = await Promise.all([
     getPlayers(),
     getTeams(),
     fetchFixtures(),
     getCurrentOrNextEvent(),
     isPreSeason(),
+    getScoutLineups(),
   ]);
-  const projectionsByPlayerId = buildAllProjections(playersList, teams, fixtures, currentEvent, horizonGameweeks, preSeason);
+  const projectionsByPlayerId = buildAllProjections(playersList, teams, fixtures, currentEvent, horizonGameweeks, preSeason, scoutLineups);
   return { currentEvent, horizonGameweeks, projectionsByPlayerId };
 }
 
 /** Builds a brand-new 15-player squad from scratch, maximising expected points within budget (e.g. for Gameweek 1). */
 export async function buildSuggestedSquad(horizonGameweeks = 3): Promise<BuiltSquad> {
-  const [playersList, teams, fixtures, currentEvent, preSeason] = await Promise.all([
+  const [playersList, teams, fixtures, currentEvent, preSeason, scoutLineups] = await Promise.all([
     getPlayers(),
     getTeams(),
     fetchFixtures(),
     getCurrentOrNextEvent(),
     isPreSeason(),
+    getScoutLineups(),
   ]);
-  const projections = buildAllProjections(playersList, teams, fixtures, currentEvent, horizonGameweeks, preSeason);
+  const projections = buildAllProjections(playersList, teams, fixtures, currentEvent, horizonGameweeks, preSeason, scoutLineups);
   return buildBestSquad(playersList, projections);
 }
