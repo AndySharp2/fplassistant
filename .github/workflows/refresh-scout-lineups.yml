@@ -18,6 +18,8 @@ on:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # the last step pushes a commit back to this repo
     steps:
       - uses: actions/checkout@v4
 
