@@ -113,6 +113,36 @@ Follow `docs/power-automate-flows.md` end to end:
 3. Publish the agent and either embed it in the code app or share it
    directly with yourself.
 
+## 6. Automate the Scout predicted line-up refresh (optional)
+
+`.github/workflows/refresh-scout-lineups.yml` scrapes Fantasy Football
+Scout's predicted line-ups on a schedule and upserts them into the
+`cra06_scoutlineups` Dataverse table. It authenticates with an Entra ID
+app registration's client-credentials flow - **no Azure subscription
+required**, just a free Entra ID tenant (the same one backing your Power
+Platform environment) and an Application User:
+
+1. **Microsoft Entra admin center** (entra.microsoft.com) -> **Applications**
+   -> **App registrations** -> **New registration**. No subscription needed
+   for this step.
+2. Under **Certificates & secrets**, create a client secret and copy its
+   value immediately (it's only shown once).
+3. Note the app's **Application (client) ID** and **Directory (tenant) ID**
+   from the Overview page.
+4. In the [Power Platform admin center](https://admin.powerplatform.microsoft.com),
+   select your environment -> **Settings** -> **Users + permissions** ->
+   **Application users** -> **New app user**. Add the app registration and
+   assign it a security role with read/write access to `cra06_scoutlineups`
+   (e.g. System Customizer, or a custom role scoped to that table).
+5. In the GitHub repo, add three **Actions secrets**: `AZURE_CLIENT_ID`,
+   `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`. The workflow passes these
+   straight to the Node script, which exchanges them for a Dataverse token
+   directly against Entra ID - it never calls `az login` or touches an
+   Azure subscription.
+
+If these secrets aren't set (e.g. running the script locally), it falls
+back to the signed-in `az` CLI session (`az login`) instead.
+
 ## Licensing notes (Developer Plan)
 
 - The Power Apps Developer Plan environment is **free** and includes

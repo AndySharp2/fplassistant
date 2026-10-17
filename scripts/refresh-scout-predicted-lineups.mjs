@@ -3,7 +3,12 @@
 //
 // Two sinks:
 //   --dataverse  upserts the snapshot into the Dataverse table the app reads at runtime
-//                (needs `az login`; this is what keeps the deployed app fresh)
+//                (this is what keeps the deployed app fresh). Gets a token either via an
+//                Entra ID app registration's client-credentials flow (AZURE_CLIENT_ID /
+//                AZURE_CLIENT_SECRET / AZURE_TENANT_ID env vars - no Azure subscription
+//                required, just a free app registration added as an Application User in
+//                the Dataverse environment), or by falling back to the signed-in `az`/`pac`
+//                CLI session for local/manual runs.
 //   --file       rewrites app/src/lib/scoutPredictedLineups.ts, the offline fallback
 //                bundled into the build
 // Defaults to both. The parse is validated hard - unless all 20 teams and 220 starters
@@ -92,7 +97,31 @@ async function dataverseRequest(token, path, { method = 'GET', body } = {}) {
   return response.status === 204 ? null : response.json();
 }
 
-async function getDataverseToken() {
+// App-only auth: no Azure subscription needed, just an Entra ID app registration added
+// as an Application User in the Dataverse environment (Power Platform admin center ->
+// environment -> Settings -> Users + permissions -> Application users).
+async function getTokenFromServicePrincipal(clientId, clientSecret, tenantId) {
+  const response = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret,
+      scope: `${environmentUrl}/.default`,
+    }),
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(`Could not get a Dataverse token from Entra ID: ${payload.error_description ?? JSON.stringify(payload)}`);
+  }
+  return payload.access_token;
+}
+
+// Local/manual fallback: reuse whatever account is already signed in via the Azure CLI
+// (e.g. `az login`), handy for testing without setting up a service principal.
+async function getTokenFromAzureCli() {
   const { stdout } = await execFileAsync(
     'az',
     ['account', 'get-access-token', '--resource', environmentUrl, '--query', 'accessToken', '-o', 'tsv'],
@@ -101,6 +130,14 @@ async function getDataverseToken() {
   const token = stdout.trim();
   if (!token) throw new Error("Could not get a Dataverse token. Run 'az login' first.");
   return token;
+}
+
+async function getDataverseToken() {
+  const { AZURE_CLIENT_ID: clientId, AZURE_CLIENT_SECRET: clientSecret, AZURE_TENANT_ID: tenantId } = process.env;
+  if (clientId && clientSecret && tenantId) {
+    return getTokenFromServicePrincipal(clientId, clientSecret, tenantId);
+  }
+  return getTokenFromAzureCli();
 }
 
 async function publishToDataverse(ids, validatedTeams, refreshedAt) {
