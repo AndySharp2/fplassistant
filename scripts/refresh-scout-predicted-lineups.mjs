@@ -11,8 +11,12 @@
 //                CLI session for local/manual runs.
 //   --file       rewrites app/src/lib/scoutPredictedLineups.ts, the offline fallback
 //                bundled into the build
-// Defaults to both. The parse is validated hard - unless all 20 teams and 220 starters
-// match, nothing is written to either sink, so a site redesign can never silently
+// Defaults to both. Each starter is matched to an FPL player primarily by Scout's photo
+// code, falling back to a fuzzy last-name match within that player's own team when the
+// code isn't in FPL's bootstrap data (the two sites occasionally spell/transliterate a
+// name or assign a photo id differently for the same player). The parse is still
+// validated hard - unless all 20 teams and 220 starters are matched by one method or the
+// other, nothing is written to either sink, so a site redesign can never silently
 // publish a half-scraped line-up.
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -45,8 +49,54 @@ const sinkRequested = args.includes('--dataverse') || args.includes('--file');
 const wantsDataverse = args.includes('--dataverse') || !sinkRequested;
 const wantsFile = args.includes('--file') || !sinkRequested;
 
+// Keeps only letters, lower-cased, for fuzzy last-name comparisons (e.g. "Yarmolyuk" vs
+// FPL's "Yarmoliuk" - real-world transliteration differences between the two sites).
+function normalizeName(name) {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
+}
+
+function levenshtein(a, b) {
+  const rows = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) rows[i][0] = i;
+  for (let j = 0; j <= b.length; j++) rows[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      rows[i][j] = a[i - 1] === b[j - 1]
+        ? rows[i - 1][j - 1]
+        : 1 + Math.min(rows[i - 1][j - 1], rows[i][j - 1], rows[i - 1][j]);
+    }
+  }
+  return rows[a.length][b.length];
+}
+
+// Last resort when a player's Scout photo code isn't in FPL's bootstrap data (most often a
+// one-off transliteration mismatch for a single player, not a page layout change): find the
+// closest last-name match among that team's own FPL roster.
+function matchByName(scoutLastName, teamId, fpl, alreadyUsedIds) {
+  const target = normalizeName(scoutLastName);
+  let best = null;
+  let bestDistance = Infinity;
+  for (const player of fpl.elements) {
+    if (player.team !== teamId || alreadyUsedIds.has(player.id)) continue;
+    const distance = Math.min(
+      levenshtein(target, normalizeName(player.second_name)),
+      levenshtein(target, normalizeName(player.web_name))
+    );
+    if (distance < bestDistance) {
+      best = player;
+      bestDistance = distance;
+    }
+  }
+  // Allow a couple of character edits (transliteration quirks), but not an unrelated player.
+  return bestDistance <= 2 ? best : null;
+}
+
 function parseScoutLineups(html, fpl) {
-  const teams = new Set(fpl.teams.map((team) => team.name));
+  const teamIdsByName = new Map(fpl.teams.map((team) => [team.name, team.id]));
   const playersByCode = new Map(fpl.elements.map((player) => [String(player.code), player]));
   const starterIds = new Set();
   let validatedTeams = 0;
@@ -57,15 +107,29 @@ function parseScoutLineups(html, fpl) {
 
     const heading = section.slice(0, headingEnd);
     const scoutTeamName = heading.slice(heading.indexOf('>') + 1).replace(/<[^>]+>/g, '').trim();
-    if (!teams.has(scoutTeamName) && !teams.has(TEAM_ALIASES.get(scoutTeamName))) continue;
+    const teamId = teamIdsByName.get(scoutTeamName) ?? teamIdsByName.get(TEAM_ALIASES.get(scoutTeamName));
+    if (teamId === undefined) continue;
 
-    const codes = [...section.slice(headingEnd).matchAll(/110x140\/(\d+)\.png/g)].map((match) => match[1]).slice(0, 11);
-    const starters = codes.map((code) => playersByCode.get(code));
-    if (starters.length !== 11 || starters.some((player) => !player)) {
+    // Each predicted starter is a `<li title="LastName (FirstName)">` wrapping a photo
+    // `<img>` whose filename is the player's Scout photo code.
+    const starterMatches = [...section.slice(headingEnd).matchAll(/title="([^"(]+)[^"]*"[\s\S]{0,400}?110x140\/(\d+)\.png/g)].slice(0, 11);
+    const starters = starterMatches.map(([, lastName, code]) => ({ lastName: lastName.trim(), player: playersByCode.get(code) }));
+
+    // Players this team has already placed (by code or an earlier fallback match in this
+    // same loop), so a fallback can't double-assign one player to two line-up slots.
+    const usedInTeam = new Set([...starterIds, ...starters.map(({ player }) => player?.id).filter(Boolean)]);
+    for (const starter of starters) {
+      if (!starter.player) {
+        starter.player = matchByName(starter.lastName, teamId, fpl, usedInTeam);
+        if (starter.player) usedInTeam.add(starter.player.id);
+      }
+    }
+
+    if (starters.length !== 11 || starters.some(({ player }) => !player)) {
       throw new Error(`Could not match all 11 predicted starters for ${scoutTeamName}. Nothing was published.`);
     }
 
-    starters.forEach((player) => starterIds.add(player.id));
+    starters.forEach(({ player }) => starterIds.add(player.id));
     validatedTeams++;
   }
 
